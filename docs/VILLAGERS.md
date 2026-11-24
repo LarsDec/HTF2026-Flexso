@@ -15,14 +15,14 @@ Updated 2026-11-24. Data facts checked against `db/data/*.csv`. Conventions: see
 
 | Villager | Domain | App (planned) | Questions left |
 |---|---|---|---|
-| Maren Holt | water | `water-app` | 3 of 15 |
+| Maren Holt | water | `water-app` | 2 of 15 |
 | Tobin Reyes | food / bakery | `food-app` | 6 of 15 |
 | Rowan Ashby | village council | `council-app` | 15 of 15 |
-| Ilse Vermeer | librarian / investigation | `investigation-app` | 9 of 15 |
+| Ilse Vermeer | librarian / investigation | `investigation-app` | 6 of 15 |
 
 ---
 
-## 2. Maren Holt (water), 3 of 15 questions left
+## 2. Maren Holt (water), 2 of 15 questions left (13 used)
 
 **[brief]** "Six pipes, one crew, and I'm always too late. When something breaks, I don't know which
 pipe is worst or who's sitting without water. Help me know where to go first."
@@ -44,12 +44,15 @@ pipe is worst or who's sitting without water. Help me know where to go first."
 6. Pipe 47/50 vs sensor 140: she does not know which to trust; "Ilse at the library is looking into
    that. Ask her." → see section 3.
 
+7. (v13) Pipe or sensor marked "not to be trusted": summary only (literal text to be added from the chat): the pipe must not look fine; it shows "I don't know".
+
 ### Fixed rules
 - `ratio = currentFlowRate / nominalFlowRate` (normal flow = `nominalFlowRate` **[derived]**, she said "normal flow").
 - **alarm**: `ratio < 0.5` OR `currentPressure < 25`.
 - **needs attention**: `ratio < 0.8` OR `currentPressure < 40` (and not alarm).
 - **fine**: otherwise. Strictly less than: 0.8 / 40 PSI = fine; 0.5 / 25 PSI = needs attention.
 - **I don't know**: reading older than 15 min (strictly more) or any input missing. Overrides the rest.
+- **I don't know (v13)**: also when the pipe or one of its sensors is marked "not to be trusted" (built in `srv/domain/pipe-overview.ts`). Reason shown: Marked "not to be trusted", so the numbers are not used.
 - **Ranking**: by people depending on the pipe. NORTH-BRANCH-02 (~140 families) first;
   SECONDARY-LOOP always last, also in alarm.
 - **Capacity**: one crew, max 2 repairs/day → show a "my morning" top 2, each with a reason.
@@ -75,6 +78,9 @@ Households are not in the data; only the "~140" from the chat.
 - With two alarms and max 2 repairs: is SECONDARY-LOOP still in the top 2, or does SOUTH-BRANCH
   (needs attention, feeds farms) go before it? ("always last" suggests yes, confirm.)
 - Freshness: sensor time or something else? What should the app explicitly not do?
+
+### Built (water-app)
+Map, table and plan select the same pipe; detail panel; clickable priority in "My morning"; "Mark as repaired" and Log repair; status filter; "I don't know" for marked pipes (question-mark icon, crossed circle on the map). Details: `WATER-REQUIREMENTS.md`, `NOT-TRUSTED.md`.
 
 ### Proposed app design [derived]
 - `WaterSupplyService.WaterPipes` virtual fields: `flowRatio : Decimal`, `healthStatus : String`
@@ -149,7 +155,7 @@ computed statuses (no new rules of our own).
 
 ---
 
-## 6. Ilse Vermeer (librarian / investigation), 9 of 15 questions left
+## 6. Ilse Vermeer (librarian / investigation), 7 of 15 questions left
 
 **[brief]** "Somebody tampered with our data. I want to see what changed."
 

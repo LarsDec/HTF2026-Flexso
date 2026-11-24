@@ -19,3 +19,126 @@ body,
     padding: 1rem;
     max-width: 100%;
 }
+
+/* ---------- Village map (control/PipeMap) ---------- */
+.waterMap {
+    width: 100%;
+    max-width: 64rem;
+    border: 1px solid var(--sapTile_BorderColor);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--sapTile_Background);
+}
+
+.waterMapSvg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.waterMapRoute {
+    cursor: pointer;
+    outline: none;
+    --waterMapColor: var(--sapNeutralElementColor);
+}
+
+.waterMapRoute--alarm { --waterMapColor: var(--sapNegativeElementColor); }
+.waterMapRoute--attention { --waterMapColor: var(--sapCriticalElementColor); }
+.waterMapRoute--fine { --waterMapColor: var(--sapPositiveElementColor); }
+.waterMapRoute--unknown { --waterMapColor: var(--sapNeutralElementColor); }
+
+.waterMapHalo {
+    fill: none;
+    stroke: var(--sapBackgroundColor);
+    stroke-width: 22;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.85;
+}
+
+.waterMapLine {
+    fill: none;
+    stroke: var(--waterMapColor);
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Status is also in the line style (not colour alone): solid = alarm / fine, dashed = attention, dotted = unknown. */
+.waterMapRoute--alarm .waterMapLine { stroke-width: 18; }
+.waterMapRoute--attention .waterMapLine { stroke-dasharray: 38 22; stroke-linecap: butt; }
+.waterMapRoute--unknown .waterMapLine { stroke-dasharray: 2 20; }
+
+.waterMapHit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 60;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.waterMapLabel {
+    font-family: var(--sapFontFamily);
+    font-size: 34px;
+    font-weight: bold;
+    fill: var(--sapTextColor);
+    stroke: var(--sapBackgroundColor);
+    stroke-width: 8px;
+    paint-order: stroke;
+    pointer-events: none;
+}
+
+.waterMapBadgeRing {
+    fill: var(--sapBackgroundColor);
+    stroke: var(--sapContent_NonInteractiveIconColor);
+    stroke-width: 7;
+    pointer-events: none;
+}
+
+.waterMapBadgeBar {
+    stroke: var(--sapContent_NonInteractiveIconColor);
+    stroke-width: 7;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+
+.waterMapRoute--dim { opacity: 0.45; }
+.waterMapRoute--selected .waterMapHalo { stroke: var(--sapContent_FocusColor); stroke-width: 34; opacity: 1; }
+.waterMapRoute:focus-visible .waterMapHalo { stroke: var(--sapContent_FocusColor); stroke-width: 34; opacity: 1; }
+
+@media (max-width: 37.5rem) {
+    /* On a phone the labels would be unreadable; the list below carries the same words. */
+    .waterMapLabel { display: none; }
+}
+
+.waterLegend {
+    gap: 0.5rem 1.5rem;
+}
+
+/* Map and detail card side by side; the card drops below the map on narrow screens. */
+.waterMapRow {
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.waterDetail {
+    border: 1px solid var(--sapTile_BorderColor);
+    border-radius: 0.5rem;
+    background: var(--sapTile_Background);
+    padding: 1rem;
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+.waterDetailEmpty {
+    color: var(--sapContent_LabelColor);
+}
+
+.waterFilterBar {
+    padding-bottom: 0.5rem;
+}
+
+/* Room under the table so it does not stick to the bottom of the page. */
+.waterPageBottomSpace {
+    height: 3rem;
+}

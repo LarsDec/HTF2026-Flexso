@@ -21,6 +21,12 @@ export const KNOWN_DEPENDANTS: Readonly<Record<string, number | null>> = {
   'NORTH-BRANCH-02': 140,
 };
 
+/**
+ * Tie-break at equal status and equal family count (Maren v12): BAKERY-BRANCH (bread for the whole
+ * village) before SOUTH-BRANCH (animals manage half a day). Pipes not listed come after these.
+ */
+export const IMPACT_ORDER: readonly string[] = ['BAKERY-BRANCH', 'SOUTH-BRANCH'];
+
 /** Why a pipe matters, in words (from the villagers). */
 const IMPACT_TEXT: Readonly<Record<string, string>> = {
   'BAKERY-BRANCH': 'bread for the whole village',
@@ -38,10 +44,17 @@ export interface RankedPipe {
   priorityRank: number;
   priorityReason: string;
   inTodaysPlan: boolean;
+  /** 1 or 2 for the pipes in today's plan (their order in the morning list), otherwise null. */
+  morningRank: number | null;
 }
 
 function statusIndex(status: HealthStatus): number {
   return STATUS_ORDER.indexOf(status);
+}
+
+function impactIndex(pipeID: string): number {
+  const index = IMPACT_ORDER.indexOf(pipeID);
+  return index === -1 ? IMPACT_ORDER.length : index;
 }
 
 function dependantsOf(pipeID: string, dependants: Readonly<Record<string, number | null>>): number | null {
@@ -72,6 +85,9 @@ export function rankPipes(
       if (db === null) return -1;
       return db - da;
     }
+    const byImpact = impactIndex(a.pipeID) - impactIndex(b.pipeID);
+    if (byImpact !== 0) return byImpact;
+    // Assumption (not Maren): pipes with no known impact are ordered alphabetically.
     return a.pipeID < b.pipeID ? -1 : a.pipeID > b.pipeID ? 1 : 0;
   });
 
@@ -85,6 +101,7 @@ export function rankPipes(
       priorityRank: index + 1,
       priorityReason: reasonFor(pipe),
       inTodaysPlan: inPlan,
+      morningRank: inPlan ? planned : null,
     };
   });
 }

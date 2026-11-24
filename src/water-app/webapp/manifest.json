@@ -6,7 +6,8 @@
     "i18n": {
       "bundleUrl": "i18n/i18n.properties",
       "supportedLocales": [
-        ""
+        "",
+        "nl"
       ],
       "fallbackLocale": ""
     },
@@ -63,7 +64,8 @@
       "libs": {
         "sap.ui.core": {},
         "sap.m": {},
-        "sap.f": {}
+        "sap.f": {},
+        "sap.ui.layout": {}
       }
     },
     "handleValidation": true,
@@ -78,7 +80,8 @@
           "bundleName": "water.pipes.i18n.i18n",
           "async": true,
           "supportedLocales": [
-            ""
+            "",
+            "nl"
           ],
           "fallbackLocale": ""
         }

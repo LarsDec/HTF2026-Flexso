@@ -34,6 +34,19 @@ describe('newestReading', () => {
 describe('evaluatePipes', () => {
   it('returns an empty list for no pipes', () => assert.deepEqual(evaluatePipes([], NOW), []));
 
+  it('shows "unknown", not fine or alarm, for a pipe marked not to be trusted (Maren v13)', () => {
+    const [fine, alarm] = evaluatePipes(
+      [
+        pipe({ ID: 'u1', pipeID: 'P1', untrusted: true }),
+        pipe({ ID: 'u2', pipeID: 'P2', untrusted: true, currentFlowRate: 10 }),
+      ],
+      NOW,
+    );
+    assert.equal(fine?.healthStatus, 'unknown');
+    assert.equal(fine?.healthIcon, 'sap-icon://question-mark');
+    assert.equal(alarm?.healthStatus, 'unknown');
+  });
+
   it('keeps the ID and fills every field for a healthy pipe', () => {
     const [e] = evaluatePipes([pipe({ ID: 'u1', pipeID: 'P1' })], NOW);
     assert.equal(e?.ID, 'u1');
@@ -48,6 +61,8 @@ describe('evaluatePipes', () => {
     assert.equal(e?.lastRepairDate, null);
     assert.equal(e?.repaired, false);
     assert.equal(e?.suspiciousRepair, false);
+    assert.equal(e?.lastRepairIssue, null);
+    assert.equal(e?.lastRepairedBy, null);
   });
 
   it('ranks the whole set and keeps the SECONDARY-LOOP last', () => {
@@ -105,6 +120,25 @@ describe('evaluatePipes', () => {
     assert.equal(e?.sourceConflict, true);
   });
 
+  it('adds who/when the conflicting sensor line was last changed', () => {
+    const [e] = evaluatePipes(
+      [
+        pipe({
+          ID: '1',
+          pipeID: 'P',
+          sensors: [
+            { sensorID: 'SENS-004', flowRate: 250, lastReading: minutesAgo(1), modifiedAt: '2026-11-17T03:13:00Z', modifiedBy: 'system' },
+          ],
+        }),
+      ],
+      NOW,
+    );
+    assert.equal(e?.conflictSensorID, 'SENS-004');
+    assert.equal(e?.conflictSensorFlow, 250);
+    assert.equal(e?.conflictChangedBy, 'system');
+    assert.equal(e?.conflictChangedAt, '2026-11-17T03:13:00.000Z');
+  });
+
   it('reports the repair date as ISO string and the repaired flag', () => {
     const [e] = evaluatePipes(
       [pipe({ ID: '1', pipeID: 'P', repairs: [{ repairDate: minutesAgo(10) }], sensors: [{ flowRate: 100, lastReading: minutesAgo(20) }] })],
@@ -114,11 +148,46 @@ describe('evaluatePipes', () => {
     assert.equal(e?.repaired, true);
   });
 
+  it('shows who fixed what in the newest real repair, even when the repaired flag is gone', () => {
+    const [e] = evaluatePipes(
+      [
+        pipe({
+          ID: '1',
+          pipeID: 'P',
+          repairs: [
+            { repairDate: minutesAgo(600), issue: 'Older', repairedBy: 'Tobin' },
+            { repairDate: minutesAgo(10), issue: 'Pipe fixed', repairedBy: 'Dana' },
+          ],
+          sensors: [{ flowRate: 100, lastReading: minutesAgo(1) }],
+        }),
+      ],
+      NOW,
+    );
+    assert.equal(e?.repaired, false);
+    assert.equal(e?.lastRepairDate, minutesAgo(10).toISOString());
+    assert.equal(e?.lastRepairIssue, 'Pipe fixed');
+    assert.equal(e?.lastRepairedBy, 'Dana');
+  });
+
+  it('a repaired pipe shows fine (no alarm) while its last reading is fresh and older than the repair', () => {
+    const bad = { currentFlowRate: 10, sensors: [{ flowRate: 10, lastReading: minutesAgo(5) }] };
+    const [e] = evaluatePipes([pipe({ ID: '1', pipeID: 'P', ...bad, repairs: [{ repairDate: minutesAgo(1) }] })], NOW);
+    assert.equal(e?.repaired, true);
+    assert.equal(e?.healthStatus, 'fine');
+    const [stale] = evaluatePipes(
+      [pipe({ ID: '1', pipeID: 'P', ...bad, sensors: [{ flowRate: 10, lastReading: minutesAgo(20) }], repairs: [{ repairDate: minutesAgo(18) }] })],
+      NOW,
+    );
+    assert.equal(stale?.healthStatus, 'unknown');
+  });
+
   it('a future repair is suspicious and not repaired', () => {
     const future = new Date(NOW.getTime() + 86_400_000);
     const [e] = evaluatePipes([pipe({ ID: '1', pipeID: 'P', repairs: [{ repairDate: future }] })], NOW);
     assert.equal(e?.suspiciousRepair, true);
     assert.equal(e?.lastRepairDate, null);
+    assert.equal(e?.lastRepairIssue, null);
+    assert.equal(e?.lastRepairedBy, null);
     assert.equal(e?.repaired, false);
   });
 

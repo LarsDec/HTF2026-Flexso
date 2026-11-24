@@ -4,9 +4,9 @@
  */
 import { toDate, type NumericInput } from './numbers';
 import { rankPipes } from './priority';
-import { assessRepair } from './repair-status';
-import { flagSourceConflict } from './source-conflict';
-import { assessPipe, healthIcon, healthState, readingAgeMinutes, type HealthStatus } from './water-health';
+import { assessRepair, lastRepairDetails } from './repair-status';
+import { describeSourceConflict, flagSourceConflict, type SensorSource } from './source-conflict';
+import { assessPipe, healthIcon, MAX_READING_AGE_MS, healthState, readingAgeMinutes, type HealthStatus, type PipeAssessment } from './water-health';
 
 export interface PipeInput {
   ID: string;
@@ -14,8 +14,13 @@ export interface PipeInput {
   currentFlowRate: NumericInput;
   nominalFlowRate: NumericInput;
   currentPressure: NumericInput;
-  sensors: readonly { flowRate: NumericInput; lastReading: Date | string | null | undefined }[];
-  repairs: readonly { repairDate: Date | string | null | undefined }[];
+  sensors: readonly (Partial<SensorSource> & {
+    flowRate: NumericInput;
+    lastReading: Date | string | null | undefined;
+  })[];
+  repairs: readonly { repairDate: Date | string | null | undefined; issue?: string | null; repairedBy?: string | null }[];
+  /** The pipe or one of its sensors is marked "not to be trusted" (Maren v13: show "I don't know"). */
+  untrusted?: boolean;
 }
 
 export interface PipeEvaluation {
@@ -28,8 +33,16 @@ export interface PipeEvaluation {
   priorityRank: number;
   priorityReason: string;
   inTodaysPlan: boolean;
+  morningRank: number | null;
   sourceConflict: boolean;
+  conflictSensorID: string | null;
+  conflictSensorFlow: number | null;
+  conflictNominalFlow: number | null;
+  conflictChangedAt: string | null;
+  conflictChangedBy: string | null;
   lastRepairDate: string | null;
+  lastRepairIssue: string | null;
+  lastRepairedBy: string | null;
   repaired: boolean;
   suspiciousRepair: boolean;
 }
@@ -47,18 +60,34 @@ export function newestReading(sensors: PipeInput['sensors']): Date | null {
 export function evaluatePipes(pipes: readonly PipeInput[], now: Date): PipeEvaluation[] {
   const assessed = pipes.map((pipe) => {
     const lastReadingAt = newestReading(pipe.sensors);
-    return { pipe, lastReadingAt, assessment: assessPipe({ ...pipe, lastReadingAt }, now) };
-  });
-  const ranking = new Map(
-    rankPipes(assessed.map((a) => ({ pipeID: a.pipe.pipeID, status: a.assessment.status }))).map((r) => [r.pipeID, r]),
-  );
-  return assessed.map(({ pipe, lastReadingAt, assessment }) => {
     const repair = assessRepair(
       pipe.repairs.map((r) => r.repairDate),
       pipe.sensors.map((s) => s.lastReading),
       now,
     );
+    const age = readingAgeMinutes(lastReadingAt, now);
+    const assessment: PipeAssessment = pipe.untrusted
+      ? { status: 'unknown', reason: 'Marked "not to be trusted", so the numbers are not used.' }
+      : repair.repaired && age !== null && age <= MAX_READING_AGE_MS / 60_000
+        ? { status: 'fine', reason: 'Repaired: the old readings no longer count. Waiting for the next reading from the pipe.' }
+        : assessPipe({ ...pipe, lastReadingAt }, now);
+    return { pipe, lastReadingAt, assessment, repair };
+  });
+  const ranking = new Map(
+    rankPipes(assessed.map((a) => ({ pipeID: a.pipe.pipeID, status: a.assessment.status }))).map((r) => [r.pipeID, r]),
+  );
+  return assessed.map(({ pipe, lastReadingAt, assessment, repair }) => {
+    const lastRepair = lastRepairDetails(pipe.repairs, now);
     const rank = ranking.get(pipe.pipeID);
+    const conflict = describeSourceConflict(
+      pipe.nominalFlowRate,
+      pipe.sensors.map((s) => ({
+        sensorID: s.sensorID,
+        flowRate: s.flowRate,
+        modifiedAt: s.modifiedAt,
+        modifiedBy: s.modifiedBy,
+      })),
+    );
     return {
       ID: pipe.ID,
       healthStatus: assessment.status,
@@ -69,8 +98,16 @@ export function evaluatePipes(pipes: readonly PipeInput[], now: Date): PipeEvalu
       priorityRank: rank?.priorityRank ?? 0,
       priorityReason: rank?.priorityReason ?? '',
       inTodaysPlan: rank?.inTodaysPlan ?? false,
+      morningRank: rank?.morningRank ?? null,
       sourceConflict: flagSourceConflict(pipe.nominalFlowRate, pipe.sensors.map((s) => s.flowRate)),
+      conflictSensorID: conflict?.sensorID ?? null,
+      conflictSensorFlow: conflict?.sensorFlow ?? null,
+      conflictNominalFlow: conflict?.nominalFlow ?? null,
+      conflictChangedAt: conflict?.changedAt ?? null,
+      conflictChangedBy: conflict?.changedBy ?? null,
       lastRepairDate: repair.lastRepairDate ? repair.lastRepairDate.toISOString() : null,
+      lastRepairIssue: lastRepair.issue,
+      lastRepairedBy: lastRepair.repairedBy,
       repaired: repair.repaired,
       suspiciousRepair: repair.suspiciousRepair,
     };

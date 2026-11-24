@@ -3,9 +3,12 @@
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns:f="sap.f"
+    xmlns:core="sap.ui.core"
+    xmlns:ctrl="water.pipes.control"
+    core:require="{ DateTime: 'sap/ui/model/type/DateTime' }"
     displayBlock="true"
     height="100%">
-    <f:DynamicPage id="page" busy="{view>/busy}">
+    <f:DynamicPage id="page">
         <f:title>
             <f:DynamicPageTitle id="pageTitle">
                 <f:heading>
@@ -25,47 +28,186 @@
                 <!-- ============================ My morning ============================ -->
                 <Title id="morningTitle" text="{i18n>morningTitle}" level="H2" class="sapUiSmallMarginBottom" />
                 <MessageStrip id="morningEmpty" type="Success" showIcon="true" text="{i18n>morningNoPlan}"
-                    visible="{= ${view>/plan}.length === 0 &amp;&amp; !${view>/busy} }" class="sapUiMediumMarginBottom" />
-                <VBox id="planList" items="{ path: 'view>/plan', templateShareable: false }" class="sapUiMediumMarginBottom">
-                    <VBox id="planCard" class="waterPlanCard sapUiSmallMarginBottom">
-                        <HBox id="planHead" wrap="Wrap" alignItems="Center" justifyContent="SpaceBetween">
-                            <Title id="planPipe" text="{view>pipeID}" level="H3" wrapping="true" />
-                            <ObjectStatus id="planStatus"
-                                text="{ parts: ['view>healthStatus', 'i18n>statusFine', 'i18n>statusAttention', 'i18n>statusAlarm', 'i18n>statusUnknown'], formatter: '.formatter.statusText' }"
-                                state="{view>healthState}" icon="{view>healthIcon}" inverted="true" />
-                        </HBox>
-                        <Text id="planStatusReason" text="{view>statusReason}" wrapping="true" class="sapUiTinyMarginTop" />
-                        <Text id="planPriorityReason" text="{view>priorityReason}" wrapping="true" class="waterReason sapUiTinyMarginTop" />
+                    visible="{view>/planEmpty}" class="sapUiMediumMarginBottom" />
+                <List id="planList" showSeparators="None" backgroundDesign="Transparent" class="sapUiMediumMarginBottom"
+                    items="{ path: '/MorningPlan', templateShareable: false, events: { dataReceived: '.onPlanReceived' } }">
+                    <CustomListItem id="planItem" type="Active" press=".onSelectPlan"
+                        highlight="{= ${path: 'pipeID', targetType: 'any'} === ${view>/selectedID} ? 'Information' : 'None' }"
+                        tooltip="{ parts: ['i18n>planSelectTooltip', 'pipeID'], formatter: '.formatter.withPipe' }">
+                        <VBox id="planCard" class="sapUiSmallMargin">
+                            <HBox id="planHead" wrap="Wrap" alignItems="Center" justifyContent="SpaceBetween">
+                                <HBox id="planTitleBox" wrap="Wrap" alignItems="Center">
+                                    <ObjectStatus id="planRank" class="sapUiSmallMarginEnd" state="Information" inverted="true"
+                                        text="{ parts: ['morningRank', 'i18n>morningRank', 'i18n>rankOne', 'i18n>rankTwo', 'i18n>rankFew', 'i18n>rankOther'], formatter: '.formatter.rankText' }" />
+                                    <Title id="planPipe" text="{pipeID}" level="H3" wrapping="true" />
+                                </HBox>
+                                <ObjectStatus id="planStatus" inverted="true" state="{healthState}" icon="{healthIcon}"
+                                    text="{ parts: ['healthStatus', 'i18n>statusFine', 'i18n>statusAttention', 'i18n>statusAlarm', 'i18n>statusUnknown'], formatter: '.formatter.statusText' }" />
+                            </HBox>
+                            <Text id="planStatusReason" text="{statusReason}" wrapping="true" class="sapUiTinyMarginTop" />
+                            <Text id="planPriorityReason" text="{priorityReason}" wrapping="true" class="waterReason sapUiTinyMarginTop" />
+                            <HBox id="planFlags" wrap="Wrap" class="sapUiTinyMarginTop">
+                                <ObjectStatus id="planRepaired" class="sapUiSmallMarginEnd" text="{i18n>pipeRepaired}" state="Information" icon="sap-icon://wrench" visible="{repaired}" />
+                                <ObjectStatus id="planUntrusted" class="sapUiSmallMarginEnd" text="{i18n>warnUntrusted}" state="None" icon="sap-icon://hide" visible="{untrusted}" />
+                                <ObjectStatus id="planConflict" class="sapUiSmallMarginEnd" text="{i18n>warnSourceConflict}" state="Warning" icon="sap-icon://alert" visible="{sourceConflict}" />
+                                <ObjectStatus id="planUntrustedSensor" state="None" icon="sap-icon://hide"
+                                    text="{ parts: ['i18n>warnUntrustedSensor', 'untrustedSensorIDs'], formatter: '.formatter.untrustedSensorText' }"
+                                    visible="{= !!${path: 'untrustedSensorIDs', targetType: 'any'} }" />
+                            </HBox>
+                            <Button id="planRepairButton" class="sapUiSmallMarginTop" text="{i18n>markRepaired}" icon="sap-icon://accept"
+                                tooltip="{ parts: ['i18n>markRepairedTooltip', 'pipeID'], formatter: '.formatter.withPipe' }" press=".onLogRepair" />
+                        </VBox>
+                    </CustomListItem>
+                </List>
+
+                <!-- ============================ Village map + detail ============================ -->
+                <Title id="mapTitle" text="{i18n>mapTitle}" level="H2" class="sapUiSmallMarginBottom" />
+                <HBox id="mapLegend" wrap="Wrap" class="waterLegend sapUiTinyMarginBottom">
+                    <ObjectStatus id="legendAlarm" text="{i18n>legendAlarm}" state="Error" icon="sap-icon://alert" />
+                    <ObjectStatus id="legendAttention" text="{i18n>legendAttention}" state="Warning" icon="sap-icon://warning" />
+                    <ObjectStatus id="legendFine" text="{i18n>legendFine}" state="Success" icon="sap-icon://sys-enter-2" />
+                    <ObjectStatus id="legendUnknown" text="{i18n>legendUnknown}" state="None" icon="sap-icon://question-mark" />
+                    <ObjectStatus id="legendUntrusted" text="{i18n>legendUntrusted}" state="None" icon="sap-icon://hide" />
+                </HBox>
+                <HBox id="mapRow" wrap="Wrap" class="waterMapRow sapUiMediumMarginBottom">
+                    <ctrl:PipeMap id="pipeMap" imageSrc="{view>/mapSrc}"
+                        ariaLabel="{i18n>mapAria}" selectedPipeID="{view>/selectedID}" select=".onSelectPipe"
+                        routes="{ path: '/WaterPipes', templateShareable: false }">
+                        <ctrl:layoutData>
+                            <FlexItemData id="mapFlex" growFactor="3" baseSize="30rem" />
+                        </ctrl:layoutData>
+                        <ctrl:routes>
+                            <ctrl:PipeRoute id="pipeRoute" pipeID="{pipeID}" mapPath="{mapPath}" status="{healthStatus}"
+                                statusText="{ parts: ['healthStatus', 'i18n>statusFine', 'i18n>statusAttention', 'i18n>statusAlarm', 'i18n>statusUnknown'], formatter: '.formatter.statusText' }"
+                                untrusted="{= !!${path: 'untrusted', targetType: 'any'} || !!${path: 'untrustedSensorIDs', targetType: 'any'} }"
+                                untrustedText="{i18n>warnUntrusted}" />
+                        </ctrl:routes>
+                    </ctrl:PipeMap>
+
+                    <VBox id="detailBox" class="waterDetail">
+                        <layoutData>
+                            <FlexItemData id="detailFlex" growFactor="1" baseSize="20rem" />
+                        </layoutData>
+                        <Title id="detailTitle" text="{i18n>detailTitle}" level="H3" visible="{= !${view>/selectedID} }" />
+                        <Text id="detailEmpty" class="waterDetailEmpty sapUiTinyMarginTop" text="{i18n>detailEmpty}" wrapping="true" visible="{= !${view>/selectedID} }" />
+                        <VBox id="detailCard" visible="{= !!${view>/selectedID} }">
+                            <HBox id="detailHead" alignItems="Center" justifyContent="SpaceBetween">
+                                <Title id="detailPipe" text="{pipeID}" level="H3" wrapping="true" />
+                                <Button id="detailClose" icon="sap-icon://decline" type="Transparent" tooltip="{i18n>detailCloseTooltip}" press=".onCloseDetail" />
+                            </HBox>
+                            <Text id="detailLocation" text="{location}" wrapping="true" class="waterReason" />
+                            <ObjectStatus id="detailStatus" class="sapUiSmallMarginTop" inverted="true" state="{healthState}" icon="{healthIcon}"
+                                text="{ parts: ['healthStatus', 'i18n>statusFine', 'i18n>statusAttention', 'i18n>statusAlarm', 'i18n>statusUnknown'], formatter: '.formatter.statusText' }" />
+                            <Text id="detailReason" class="sapUiTinyMarginTop" text="{statusReason}" wrapping="true" />
+                            <Text id="detailPriority" class="waterReason sapUiTinyMarginTop" text="{priorityReason}" wrapping="true" />
+                            <ObjectStatus id="detailRepaired" class="sapUiTinyMarginTop" text="{i18n>pipeRepaired}" state="Information" icon="sap-icon://wrench" visible="{repaired}" />
+                            <VBox id="detailFacts" class="sapUiSmallMarginTop">
+                                <ObjectAttribute id="detailFlow" title="{i18n>flowLabel}"
+                                    text="{ parts: ['i18n>flowOfNominal', 'i18n>valueNone', 'currentFlowRate', 'nominalFlowRate'], formatter: '.formatter.flowText' }" />
+                                <ObjectAttribute id="detailPressure" title="{i18n>pressureLabel}"
+                                    text="{ parts: ['i18n>pressureValue', 'i18n>valueNone', 'currentPressure'], formatter: '.formatter.pressureText' }" />
+                                <ObjectAttribute id="detailReading" title="{i18n>readingLabel}"
+                                    text="{ parts: [{ path: 'readingAgeMinutes', targetType: 'any' }, 'i18n>readingNow', 'i18n>readingMinutesAgo', 'i18n>readingHoursAgo', 'i18n>readingNone'], formatter: '.formatter.readingAge' }"
+                                    tooltip="{ parts: [{ path: 'readingAgeMinutes', targetType: 'any' }, 'i18n>readingExact', 'i18n>readingNone'], formatter: '.formatter.readingTooltip' }" />
+                                <ObjectAttribute id="detailLastRepair"
+                                    text="{ parts: ['i18n>lastRepair', { path: 'lastRepairDate', type: 'DateTime', formatOptions: { pattern: 'dd MMM yyyy', source: { pattern: &quot;yyyy-MM-dd'T'HH:mm:ss.SSSX&quot; } } }, 'lastRepairedBy', 'lastRepairIssue'], formatter: '.formatter.lastRepairText' }"
+                                    visible="{= !!${path: 'lastRepairDate', targetType: 'any'} }" />
+                            </VBox>
+                            <VBox id="detailWarnings" class="sapUiSmallMarginTop">
+                                <ObjectStatus id="detailConflict" text="{i18n>warnSourceConflict}" state="Warning" icon="sap-icon://alert" visible="{sourceConflict}" />
+                                <Text id="detailConflictText" wrapping="true" class="waterReason" visible="{sourceConflict}"
+                                    text="{ parts: ['i18n>warnSourceConflictDetail', 'i18n>warnSourceConflictNoAudit', 'conflictSensorID', 'conflictSensorFlow', 'conflictNominalFlow', 'conflictChangedBy', { path: 'conflictChangedAt', type: 'DateTime', formatOptions: { style: 'medium', UTC: true, source: { pattern: &quot;yyyy-MM-dd'T'HH:mm:ss.SSSX&quot; } } }], formatter: '.formatter.conflictDetail' }" />
+                                <ObjectStatus id="detailSuspicious" text="{i18n>warnSuspiciousRepair}" state="Warning" icon="sap-icon://alert" visible="{suspiciousRepair}" />
+                                <ObjectStatus id="detailUntrusted" text="{i18n>warnUntrusted}" state="None" icon="sap-icon://hide" visible="{untrusted}" />
+                                <Text id="detailUntrustedText" wrapping="true" class="waterReason" visible="{untrusted}"
+                                    text="{ parts: ['i18n>warnUntrustedDetail', 'untrustedReason', 'untrustedBy', { path: 'untrustedAt', type: 'DateTime', formatOptions: { style: 'medium', UTC: true, source: { pattern: &quot;yyyy-MM-dd'T'HH:mm:ss.SSSX&quot; } } }], formatter: '.formatter.untrustedDetail' }" />
+                                <ObjectStatus id="detailUntrustedSensor" state="None" icon="sap-icon://hide"
+                                    text="{ parts: ['i18n>warnUntrustedSensor', 'untrustedSensorIDs'], formatter: '.formatter.untrustedSensorText' }"
+                                    visible="{= !!${path: 'untrustedSensorIDs', targetType: 'any'} }" />
+                                <Text id="detailUntrustedSensorText" wrapping="true" class="waterReason"
+                                    visible="{= !!${path: 'untrustedSensorIDs', targetType: 'any'} }"
+                                    text="{ parts: ['i18n>warnUntrustedSensorDetail', 'untrustedSensorReason', 'untrustedSensorBy', { path: 'untrustedSensorAt', type: 'DateTime', formatOptions: { style: 'medium', UTC: true, source: { pattern: &quot;yyyy-MM-dd'T'HH:mm:ss.SSSX&quot; } } }], formatter: '.formatter.untrustedDetail' }" />
+                            </VBox>
+                            <Button id="detailLogRepair" class="sapUiSmallMarginTop" text="{i18n>logRepair}" icon="sap-icon://wrench" type="Emphasized"
+                                tooltip="{i18n>logRepairTooltip}" press=".onLogRepairFromDetail" />
+                            <Button id="detailRepairHistory" class="sapUiTinyMarginTop" text="{i18n>repairHistory}" icon="sap-icon://history"
+                                tooltip="{ parts: ['i18n>repairHistoryTooltip', 'pipeID'], formatter: '.formatter.withPipe' }" press=".onRepairHistoryFromDetail" />
+                        </VBox>
                     </VBox>
-                </VBox>
+                </HBox>
 
                 <!-- ============================ All pipes ============================ -->
-                <Title id="pipesTitle" text="{i18n>pipesTitle}" level="H2" class="sapUiSmallMarginBottom" />
-                <Table id="pipesTable" noDataText="{i18n>noData}" items="{ path: 'view>/pipes', templateShareable: false }">
+                <Table id="pipesTable" class="sapUiSizeCompact" busy="{view>/busy}" noDataText="{i18n>noData}"
+                    items="{ path: '/WaterPipes', templateShareable: false, events: { dataRequested: '.onPipesRequested', dataReceived: '.onPipesReceived' } }">
+                    <headerToolbar>
+                        <Toolbar id="pipesToolbar" class="waterFilterBar">
+                            <Title id="pipesTitle" text="{i18n>pipesTitle}" level="H2" />
+                            <Text id="pipesSortNote" text="{i18n>sortedByPriority}" class="waterReason" />
+                            <ToolbarSpacer id="pipesSpacer" />
+                            <SegmentedButton id="statusFilter" selectedKey="{view>/filter}" selectionChange=".onFilterChange">
+                                <items>
+                                    <SegmentedButtonItem id="filterAll" key="all" text="{ parts: ['i18n>filterAll', 'view>/counts/all'], formatter: '.formatter.messageText' }" />
+                                    <SegmentedButtonItem id="filterAlarm" key="alarm" icon="sap-icon://alert" tooltip="{i18n>statusAlarm}"
+                                        text="{ parts: ['i18n>filterAlarm', 'view>/counts/alarm'], formatter: '.formatter.messageText' }" />
+                                    <SegmentedButtonItem id="filterUnknown" key="unknown" icon="sap-icon://question-mark" tooltip="{i18n>statusUnknown}"
+                                        text="{ parts: ['i18n>filterUnknown', 'view>/counts/unknown'], formatter: '.formatter.messageText' }" />
+                                    <SegmentedButtonItem id="filterAttention" key="attention" icon="sap-icon://warning" tooltip="{i18n>statusAttention}"
+                                        text="{ parts: ['i18n>filterAttention', 'view>/counts/attention'], formatter: '.formatter.messageText' }" />
+                                    <SegmentedButtonItem id="filterFine" key="fine" icon="sap-icon://sys-enter-2" tooltip="{i18n>statusFine}"
+                                        text="{ parts: ['i18n>filterFine', 'view>/counts/fine'], formatter: '.formatter.messageText' }" />
+                                </items>
+                            </SegmentedButton>
+                        </Toolbar>
+                    </headerToolbar>
                     <columns>
+                        <Column id="pipeRankCol" width="4rem"><Text id="pipeRankHdr" text="{i18n>pipeRank}" /></Column>
                         <Column id="pipeIDCol"><Text id="pipeIDHdr" text="{i18n>pipeID}" /></Column>
                         <Column id="pipeStatusCol"><Text id="pipeStatusHdr" text="{i18n>pipeStatus}" /></Column>
-                        <Column id="pipeReasonCol" minScreenWidth="Tablet" demandPopin="true"><Text id="pipeReasonHdr" text="{i18n>pipeReason}" /></Column>
-                        <Column id="pipeAgeCol" hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text id="pipeAgeHdr" text="{i18n>pipeReadingAge}" /></Column>
+                        <Column id="pipeAgeCol" minScreenWidth="Tablet" demandPopin="true"><Text id="pipeAgeHdr" text="{i18n>pipeReadingAge}" /></Column>
+                        <Column id="pipeFlowCol" minScreenWidth="Tablet" demandPopin="true"><Text id="pipeFlowHdr" text="{i18n>flowLabel}" /></Column>
+                        <Column id="pipePressureCol" minScreenWidth="Desktop" demandPopin="true"><Text id="pipePressureHdr" text="{i18n>pressureLabel}" /></Column>
+                        <Column id="pipeRepairCol" minScreenWidth="Desktop" demandPopin="true"><Text id="pipeRepairHdr" text="{i18n>lastRepairLabel}" /></Column>
+                        <Column id="pipeActionCol" hAlign="End" width="13rem"><Text id="pipeActionHdr" text="{i18n>pipeAction}" /></Column>
                     </columns>
                     <items>
-                        <ColumnListItem id="pipeRow">
+                        <ColumnListItem id="pipeRow" type="Active" press=".onSelectRow"
+                            highlight="{= ${path: 'pipeID', targetType: 'any'} === ${view>/selectedID} ? 'Information' : 'None' }"
+                            tooltip="{ parts: ['i18n>rowSelectTooltip', 'pipeID'], formatter: '.formatter.withPipe' }"
+                            visible="{= ${view>/filter} === 'all' || ${path: 'healthStatus', targetType: 'any'} === ${view>/filter} }"
+                            selected="{= ${path: 'pipeID', targetType: 'any'} === ${view>/selectedID} }">
                             <cells>
-                                <ObjectIdentifier id="pipeIDCell" title="{view>pipeID}" />
+                                <ObjectNumber id="pipeRankCell" number="{priorityRank}" emphasized="false" />
+                                <ObjectIdentifier id="pipeIDCell" title="{pipeID}" />
                                 <VBox id="pipeStatusCell">
-                                    <ObjectStatus id="pipeStatusText"
-                                        text="{ parts: ['view>healthStatus', 'i18n>statusFine', 'i18n>statusAttention', 'i18n>statusAlarm', 'i18n>statusUnknown'], formatter: '.formatter.statusText' }"
-                                        state="{view>healthState}" icon="{view>healthIcon}" />
-                                    <ObjectStatus id="pipeRepairedText" text="{i18n>pipeRepaired}" state="Information" icon="sap-icon://wrench" visible="{view>repaired}" />
-                                    <ObjectStatus id="pipeConflictText" text="{i18n>warnSourceConflict}" state="Warning" icon="sap-icon://alert" visible="{view>sourceConflict}" />
-                                    <ObjectStatus id="pipeSuspiciousText" text="{i18n>warnSuspiciousRepair}" state="Warning" icon="sap-icon://alert" visible="{view>suspiciousRepair}" />
+                                    <ObjectStatus id="pipeStatusText" state="{healthState}" icon="{healthIcon}"
+                                        text="{ parts: ['healthStatus', 'i18n>statusFine', 'i18n>statusAttention', 'i18n>statusAlarm', 'i18n>statusUnknown'], formatter: '.formatter.statusText' }" />
+                                    <ObjectStatus id="pipeRepairedText" text="{i18n>pipeRepaired}" state="Information" icon="sap-icon://wrench" visible="{repaired}" />
+                                    <ObjectStatus id="pipeConflictText" text="{i18n>warnSourceConflict}" state="Warning" icon="sap-icon://alert" visible="{sourceConflict}" />
+                                    <ObjectStatus id="pipeUntrustedText" text="{i18n>warnUntrusted}" state="None" icon="sap-icon://hide"
+                                        visible="{= !!${path: 'untrusted', targetType: 'any'} || !!${path: 'untrustedSensorIDs', targetType: 'any'} }" />
                                 </VBox>
-                                <Text id="pipeReasonCell" text="{view>statusReason}" wrapping="true" />
-                                <ObjectNumber id="pipeAgeCell" number="{view>readingAgeMinutes}" unit="{i18n>unitMinutes}" />
+                                <Text id="pipeAgeCell"
+                                    text="{ parts: [{ path: 'readingAgeMinutes', targetType: 'any' }, 'i18n>readingNow', 'i18n>readingMinutesAgo', 'i18n>readingHoursAgo', 'i18n>readingNone'], formatter: '.formatter.readingAge' }"
+                                    tooltip="{ parts: [{ path: 'readingAgeMinutes', targetType: 'any' }, 'i18n>readingExact', 'i18n>readingNone'], formatter: '.formatter.readingTooltip' }" />
+                                <Text id="pipeFlowCell"
+                                    text="{ parts: ['i18n>flowOfNominal', 'i18n>valueNone', 'currentFlowRate', 'nominalFlowRate'], formatter: '.formatter.flowText' }" />
+                                <Text id="pipePressureCell"
+                                    text="{ parts: ['i18n>pressureValue', 'i18n>valueNone', 'currentPressure'], formatter: '.formatter.pressureText' }" />
+                                <Text id="pipeLastRepairCell" wrapping="true"
+                                    text="{ parts: ['i18n>lastRepairShort', 'i18n>lastRepairNone', { path: 'lastRepairDate', type: 'DateTime', formatOptions: { pattern: 'dd MMM yyyy', source: { pattern: &quot;yyyy-MM-dd'T'HH:mm:ss.SSSX&quot; } } }, 'lastRepairedBy', 'lastRepairIssue'], formatter: '.formatter.lastRepairShort' }" />
+                                <HBox id="pipeActionBox" wrap="NoWrap" justifyContent="End" alignItems="Center">
+                                    <Button id="repairHistoryButton" class="sapUiTinyMarginEnd" text="{i18n>repairHistory}" icon="sap-icon://history"
+                                        tooltip="{ parts: ['i18n>repairHistoryTooltip', 'pipeID'], formatter: '.formatter.withPipe' }" press=".onRepairHistory" />
+                                    <Button id="logRepairButton" text="{i18n>logRepair}" icon="sap-icon://wrench"
+                                        tooltip="{ parts: ['i18n>logRepairPipeTooltip', 'pipeID'], formatter: '.formatter.withPipe' }" press=".onLogRepair" />
+                                </HBox>
                             </cells>
                         </ColumnListItem>
                     </items>
                 </Table>
+                <MessageStrip id="filterEmpty" type="Information" showIcon="true" text="{i18n>filterEmpty}"
+                    visible="{view>/filterEmpty}" class="sapUiSmallMarginTop" />
+                <core:HTML id="pageBottomSpace" content="&lt;div class='waterPageBottomSpace'&gt;&lt;/div&gt;" />
             </VBox>
         </f:content>
     </f:DynamicPage>

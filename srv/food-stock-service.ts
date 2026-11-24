@@ -9,6 +9,7 @@
  * and the part of its API used here is described in srv/lib/food-cds-types.ts.
  */
 import { randomUUID } from 'node:crypto';
+import { markUntrustedRows } from './lib/distrusts';
 import type { CdsApi, CdsRequest } from './lib/food-cds-types';
 import { formatFixed, toFixed } from './domain/food-decimal';
 import { addDays, isIsoDate, isTimeZone, parseClockTime } from './domain/food-calendar';
@@ -82,6 +83,8 @@ function timeParam(req: CdsRequest, name: string): string | undefined {
 
 export default class FoodStockService extends cds.ApplicationService {
   override async init(): Promise<void> {
+    // Marks from the investigation service: "not to be trusted" on stock items.
+    this.after('READ', 'StockItems', (results) => markUntrustedRows('StockItems', results));
     this.on('READ', 'ReorderLines', (req) => readLines(req, false));
     this.on('READ', 'OrderProposals', (req) => readLines(req, true));
 

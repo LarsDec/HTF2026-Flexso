@@ -185,3 +185,18 @@ entity OutboundMessages : cuid, managed {
   subject   : String;
   body      : LargeString;
 }
+// ---------------------------------------------------------------------------
+// Investigation — lines Ilse marked as "not to be trusted"
+// ---------------------------------------------------------------------------
+
+/**
+ * A mark on one line of another entity. The line itself stays untouched; only this label is added.
+ * `entityName` is the entity (WaterPipes, Sensors, Repairs, Landmarks or StockItems), `recordID` its key.
+ * Created by the action markUntrusted, deleted by clearUntrusted (no CSV: the table starts empty).
+ */
+entity Distrusts : cuid, managed {
+  entityName : String(40);
+  recordID   : UUID;
+  reason     : String(500);
+  markedBy   : String(100);   // typed in: the app is open, so `createdBy` is only "anonymous"
+}

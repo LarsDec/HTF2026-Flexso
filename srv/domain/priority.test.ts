@@ -51,6 +51,19 @@ describe('rankPipes plan for today', () => {
     assert.ok(ranked.every((r) => !r.inTodaysPlan));
     assert.ok(ranked.every((r) => r.priorityReason === 'No action needed.'));
   });
+  it('numbers the plan 1, 2 in morning order and leaves the rest null', () => {
+    const ranked = rankPipes([pipe(SECONDARY_LOOP_ID, 'alarm'), pipe('A', 'fine'), pipe('B', 'attention'), pipe('C', 'alarm'), pipe('D', 'alarm')]);
+    const byId = new Map(ranked.map((r) => [r.pipeID, r.morningRank]));
+    assert.equal(byId.get('C'), 1);
+    assert.equal(byId.get('D'), 2);
+    assert.equal(byId.get('B'), null);
+    assert.equal(byId.get('A'), null);
+    assert.equal(byId.get(SECONDARY_LOOP_ID), null);
+  });
+  it('the rank counts plan places, not list places (fine pipe before the secondary loop)', () => {
+    const ranked = rankPipes([pipe('A', 'fine'), pipe(SECONDARY_LOOP_ID, 'alarm')]);
+    assert.equal(ranked.find((r) => r.pipeID === SECONDARY_LOOP_ID)?.morningRank, 1);
+  });
   it('an unknown pipe is eligible for the plan', () => {
     assert.equal(rankPipes([pipe('A', 'unknown')])[0]?.inTodaysPlan, true);
   });
@@ -67,6 +80,22 @@ describe('rankPipes tie-break', () => {
   it('falls back to pipeID when dependants are equal or both unknown', () => {
     assert.deepEqual(order([pipe('B', 'alarm'), pipe('A', 'alarm')]), ['A', 'B']);
     assert.deepEqual(order([pipe('B', 'alarm'), pipe('A', 'alarm')], { A: 7, B: 7 }), ['A', 'B']);
+  });
+  it('BAKERY-BRANCH before SOUTH-BRANCH at equal status, whatever the input order (Maren v12)', () => {
+    assert.deepEqual(order([pipe('SOUTH-BRANCH', 'attention'), pipe('BAKERY-BRANCH', 'attention')]), ['BAKERY-BRANCH', 'SOUTH-BRANCH']);
+    assert.deepEqual(order([pipe('BAKERY-BRANCH', 'attention'), pipe('SOUTH-BRANCH', 'attention')]), ['BAKERY-BRANCH', 'SOUTH-BRANCH']);
+  });
+  it('with one repair slot left the plan holds BAKERY-BRANCH, not SOUTH-BRANCH', () => {
+    const ranked = rankPipes([pipe('NORTH-BRANCH-02', 'attention'), pipe('SOUTH-BRANCH', 'attention'), pipe('BAKERY-BRANCH', 'attention')]);
+    const plan = ranked.filter((r) => r.inTodaysPlan).map((r) => r.pipeID);
+    assert.deepEqual(plan, ['NORTH-BRANCH-02', 'BAKERY-BRANCH']);
+    assert.ok(!plan.includes('SOUTH-BRANCH'));
+  });
+  it('known impact comes before unknown pipes, and SECONDARY-LOOP stays last', () => {
+    assert.deepEqual(
+      order([pipe('A', 'alarm'), pipe(SECONDARY_LOOP_ID, 'alarm'), pipe('SOUTH-BRANCH', 'alarm'), pipe('BAKERY-BRANCH', 'alarm')]),
+      ['BAKERY-BRANCH', 'SOUTH-BRANCH', 'A', SECONDARY_LOOP_ID],
+    );
   });
   it('ranks are 1-based and consecutive', () => {
     const ranked = rankPipes([pipe('A', 'fine'), pipe('B', 'alarm'), pipe('C', 'attention')]);

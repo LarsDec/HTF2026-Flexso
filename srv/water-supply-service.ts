@@ -8,9 +8,13 @@
  * `@sap/cds` ships no TypeScript declarations in this project, so it is loaded with `require`
  * and the part of its API this file uses is described in the small interfaces below.
  */
+import { randomUUID } from 'node:crypto';
+import { flagRepair } from './domain/repair-status';
+import { validateRepairLog, type RepairLogInput, type RepairLogRecord } from './domain/repair-log';
 import { startDemoSensorFeed } from './lib/demo-freshness';
 import { evaluatePipes, type PipeEvaluation, type PipeInput } from './domain/pipe-overview';
 import type { NumericInput } from './domain/numbers';
+import { markUntrustedRows, markUntrustedSensorsOnPipes, readAllDistrusts } from './lib/distrusts';
 
 // 👋 EXAMPLE — the shape of a WaterPipes row as our handler sees it. Every field is optional:
 //    the client decides which fields it asks for ($select).
@@ -29,13 +33,19 @@ interface PipeDbRow {
   currentPressure: NumericInput;
 }
 interface SensorDbRow {
+  ID: string;
   pipe_ID: string | null;
+  sensorID: string | null;
   flowRate: NumericInput;
   lastReading: string | null;
+  modifiedAt: string | null;
+  modifiedBy: string | null;
 }
 interface RepairDbRow {
   pipe_ID: string | null;
   repairDate: string | null;
+  issue: string | null;
+  repairedBy: string | null;
 }
 
 /** A query that can be awaited directly or narrowed with `where`. */
@@ -43,10 +53,24 @@ interface Query<T> extends PromiseLike<T[]> {
   where(predicate: Readonly<Record<string, unknown>>): PromiseLike<T[]>;
 }
 
+/** The slice of a CAP request this file uses (bound action `logRepair`). */
+interface LogRepairRequest {
+  readonly data: RepairLogInput;
+  readonly subject: unknown;
+  error(code: number, message: string, target?: string): void;
+}
+
+/** The slice of a CAP read request this file uses. */
+interface ReadRequest {
+  readonly query: { where(predicate: Readonly<Record<string, unknown>>): unknown };
+}
+
 /** The slice of a CAP service this file uses. */
 interface CdsService {
   init(): Promise<void>;
+  before(event: string, entity: string, handler: (req: ReadRequest) => unknown): void;
   after(event: string, entity: string, handler: (results: unknown) => unknown): void;
+  on(event: string, entity: string, handler: (req: LogRepairRequest) => unknown): void;
 }
 
 /** The slice of the `cds` facade this file uses. */
@@ -57,6 +81,10 @@ interface CdsApi {
       from(entity: string): {
         columns<T = PipeRow>(...columns: readonly string[]): Query<T>;
       };
+      one: { from(source: unknown): { columns(...columns: readonly string[]): PromiseLike<{ ID: string } | null | undefined> } };
+    };
+    readonly INSERT: {
+      into(entity: string): { entries(entry: Readonly<Record<string, unknown>>): PromiseLike<unknown> };
     };
   };
   log(module: string): { warn(...args: readonly unknown[]): void };
@@ -64,7 +92,7 @@ interface CdsApi {
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const cds = require('@sap/cds') as CdsApi;
-const { SELECT } = cds.ql;
+const { SELECT, INSERT } = cds.ql;
 const log = cds.log('water-supply');
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -111,39 +139,56 @@ async function addDaysSinceMaintenance(results: unknown): Promise<void> {
  * repair (3 queries, whatever the client's $select) and let the pure functions in srv/domain decide.
  * This handler only fetches data and maps the result onto the rows.
  */
-async function addHealthOverview(results: unknown): Promise<void> {
-  const rows = (Array.isArray(results) ? results : [results]).filter(
-    (row): row is PipeRow & Partial<PipeEvaluation> => row !== null && typeof row === 'object',
-  );
-  if (rows.length === 0) return;
-
-  const [pipes, sensors, repairs] = await Promise.all([
+async function evaluateAllPipes(): Promise<Map<string, PipeEvaluation>> {
+  const [pipes, sensors, repairs, pipeMarks, sensorMarks] = await Promise.all([
     SELECT.from('oakhaven.curse.WaterPipes').columns<PipeDbRow>(
       'ID', 'pipeID', 'currentFlowRate', 'nominalFlowRate', 'currentPressure',
     ),
-    SELECT.from('oakhaven.curse.Sensors').columns<SensorDbRow>('pipe_ID', 'flowRate', 'lastReading'),
-    SELECT.from('oakhaven.curse.Repairs').columns<RepairDbRow>('pipe_ID', 'repairDate'),
+    SELECT.from('oakhaven.curse.Sensors').columns<SensorDbRow>(
+      'ID', 'pipe_ID', 'sensorID', 'flowRate', 'lastReading', 'modifiedAt', 'modifiedBy',
+    ),
+    SELECT.from('oakhaven.curse.Repairs').columns<RepairDbRow>('pipe_ID', 'repairDate', 'issue', 'repairedBy'),
+    readAllDistrusts('WaterPipes'),
+    readAllDistrusts('Sensors'),
   ]);
+  const untrustedPipes = new Set(pipeMarks);
+  for (const s of sensors) if (sensorMarks.has(s.ID) && s.pipe_ID) untrustedPipes.add(s.pipe_ID);
 
   const sensorsByPipe = new Map<string, PipeInput['sensors'][number][]>();
   for (const s of sensors) {
     const list = sensorsByPipe.get(s.pipe_ID ?? '') ?? [];
-    list.push({ flowRate: s.flowRate, lastReading: s.lastReading });
+    list.push({
+      sensorID: s.sensorID,
+      flowRate: s.flowRate,
+      lastReading: s.lastReading,
+      modifiedAt: s.modifiedAt,
+      modifiedBy: s.modifiedBy,
+    });
     sensorsByPipe.set(s.pipe_ID ?? '', list);
   }
   const repairsByPipe = new Map<string, PipeInput['repairs'][number][]>();
   for (const r of repairs) {
     const list = repairsByPipe.get(r.pipe_ID ?? '') ?? [];
-    list.push({ repairDate: r.repairDate });
+    list.push({ repairDate: r.repairDate, issue: r.issue, repairedBy: r.repairedBy });
     repairsByPipe.set(r.pipe_ID ?? '', list);
   }
 
   const inputs: PipeInput[] = pipes.map((p) => ({
     ...p,
+    untrusted: untrustedPipes.has(p.ID),
     sensors: sensorsByPipe.get(p.ID) ?? [],
     repairs: repairsByPipe.get(p.ID) ?? [],
   }));
-  const evaluations = new Map(evaluatePipes(inputs, new Date()).map((e) => [e.ID, e]));
+  return new Map(evaluatePipes(inputs, new Date()).map((e) => [e.ID, e]));
+}
+
+/** Adds the evaluation to every row and puts a collection in repair order (virtual fields cannot be sorted by the database). */
+async function addHealthOverview(results: unknown): Promise<void> {
+  const rows = (Array.isArray(results) ? results : [results]).filter(
+    (row): row is PipeRow & Partial<PipeEvaluation> => row !== null && typeof row === 'object',
+  );
+  if (rows.length === 0) return;
+  const evaluations = await evaluateAllPipes();
 
   for (const row of rows) {
     const evaluation = row.ID ? evaluations.get(row.ID) : undefined;
@@ -153,13 +198,93 @@ async function addHealthOverview(results: unknown): Promise<void> {
     }
     Object.assign(row, evaluation);
   }
+  if (Array.isArray(results)) {
+    const rank = (row: Partial<PipeEvaluation>): number => row.priorityRank ?? Number.MAX_SAFE_INTEGER;
+    results.sort((a: Partial<PipeEvaluation>, b: Partial<PipeEvaluation>) => rank(a) - rank(b));
+  }
+}
+
+/** Repair row as the log reads it; the client may $select only some fields, so missing inputs are read once. */
+interface RepairRow {
+  ID?: string;
+  repairDate?: string | null;
+  repairedBy?: string | null;
+  futureDated?: boolean | null;
+  bySystem?: boolean | null;
+  suspicious?: boolean | null;
+}
+
+/** Fills the flags of the repair log (future date, logged by system). One query for rows that lack an input. */
+async function addRepairFlags(results: unknown): Promise<void> {
+  const rows = (Array.isArray(results) ? results : [results]).filter(
+    (row): row is RepairRow => row !== null && typeof row === 'object',
+  );
+  const missing = rows.filter((r) => r.ID && !('repairDate' in r && 'repairedBy' in r)).map((r) => r.ID);
+  const known = new Map<string, RepairRow>();
+  if (missing.length > 0) {
+    const found = await SELECT.from('oakhaven.curse.Repairs')
+      .columns<RepairRow>('ID', 'repairDate', 'repairedBy')
+      .where({ ID: { in: missing } });
+    for (const r of found) known.set(r.ID ?? '', r);
+  }
+  const now = new Date();
+  for (const row of rows) {
+    const source = 'repairDate' in row && 'repairedBy' in row ? row : (known.get(row.ID ?? '') ?? row);
+    Object.assign(row, flagRepair({ repairDate: source.repairDate ?? null, repairedBy: source.repairedBy ?? null }, now));
+  }
+}
+
+/** Reading MorningPlan: restrict the query to the pipes in today's plan (decided by srv/domain/priority.ts). */
+async function restrictToPlan(req: ReadRequest): Promise<void> {
+  const evaluations = await evaluateAllPipes();
+  const ids = [...evaluations.values()].filter((e) => e.inTodaysPlan).map((e) => e.ID);
+  req.query.where({ ID: { in: ids } });
+}
+
+/**
+ * Bound action WaterPipes.logRepair: validates in srv/domain/repair-log.ts and stores one Repairs row.
+ * The existing health overview then shows "repaired" (see repair-status.ts), until newer readings say otherwise.
+ */
+async function logRepair(req: LogRepairRequest): Promise<RepairLogRecord | undefined> {
+  const result = validateRepairLog(req.data, new Date());
+  if (!result.ok) {
+    for (const e of result.errors) req.error(e.code, e.message, e.target);
+    return undefined;
+  }
+  const pipe = await SELECT.one.from(req.subject).columns('ID');
+  if (!pipe) {
+    req.error(404, 'This pipe does not exist.');
+    return undefined;
+  }
+  await INSERT.into('oakhaven.curse.Repairs').entries({
+    pipe_ID: pipe.ID,
+    repairID: randomUUID(),
+    issue: result.record.issue,
+    repairDate: result.record.repairDate,
+    repairedBy: result.record.repairedBy,
+  });
+  return result.record;
 }
 
 export default class WaterSupplyService extends cds.ApplicationService {
   override async init(): Promise<void> {
     // 👋 EXAMPLE — register the handler: after every READ of WaterPipes, add daysSinceMaintenance.
-    this.after('READ', 'WaterPipes', addDaysSinceMaintenance);
-    this.after('READ', 'WaterPipes', addHealthOverview);
+    //    MorningPlan is the same pipes, restricted to today's plan, so it gets the same fields.
+    this.before('READ', 'MorningPlan', restrictToPlan);
+    for (const pipes of ['WaterPipes', 'MorningPlan']) {
+      this.after('READ', pipes, addDaysSinceMaintenance);
+      this.after('READ', pipes, addHealthOverview);
+      // Marks from the investigation service: "not to be trusted" (the records are pipes in both cases).
+      this.after('READ', pipes, (results) => markUntrustedRows('WaterPipes', results));
+      this.after('READ', pipes, markUntrustedSensorsOnPipes);
+    }
+    // Same marks on sensors, repairs and landmarks.
+    this.after('READ', 'Sensors', (results) => markUntrustedRows('Sensors', results));
+    this.after('READ', 'Repairs', addRepairFlags);
+    this.after('READ', 'Repairs', (results) => markUntrustedRows('Repairs', results));
+    this.after('READ', 'Landmarks', (results) => markUntrustedRows('Landmarks', results));
+
+    this.on('logRepair', 'WaterPipes', logRepair);
 
     startDemoSensorFeed();
     return super.init();

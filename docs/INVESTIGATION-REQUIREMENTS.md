@@ -6,7 +6,7 @@ Requirements for the investigation app (`src/investigation-app`, `srv/investigat
 
 > "Some of our numbers don't add up, and I'm certain somebody tampered with them. I need proof, not rumours."
 
-## 1. Ilse's literal answers (v1 to v6) and the rules that follow
+## 1. Ilse's literal answers (v1 to v8) and the rules that follow
 
 | # | Our question | Ilse says |
 |---|---|---|
@@ -16,6 +16,8 @@ Requirements for the investigation app (`src/investigation-app`, `srv/investigat
 | 4 | What should the screen show for each suspicious line? | "For each line I'd want the reason it's suspicious in plain words I can repeat to the council, plus when it was last changed and by whom. And then I need a way to mark it "not to be trusted", so Maren, Tobin and the council don't act on it. How it all looks is up to you, I'm no tinkerer." |
 | 5 | While going through the records I found a repair note on the main water pipe from 2024, signed only 'W. S.'. Nothing else says who that is. What can you tell me about that name? | *goes very quiet, then whispers* That note gives me chills, I'll admit. I have no idea who W. S. is, and I won't guess at a name. It ends with some strange letters I cannot read either. |
 | 6 | Say you have marked the broken sensor line as 'not to be trusted'. Tomorrow morning Maren opens her screen and that line is on it. What should she see there, and what should she do with it? | *nods slowly* She should see clearly that the line is marked 'not to be trusted', so she doesn't act on it. What she does instead with her water is Maren's business, not mine. Best ask her yourself. |
+| 7 | The night before the council meeting you have marked several lines. What do you want to take with you? And what if one mark was a mistake? | "I'd want to bring the list of every line I've marked, each with the reason it's suspicious in words I can explain to the council. And ideally a timeline: when it all started, and whether it happened at once or bit by bit." (mistaken mark: ask separately) |
+| 8 | What should happen if you later find out one of your marks was a mistake? | (summary, site was down) She has not thought that far. The evidence must stay clear and explainable, no magic. How to handle it is up to us. |
 
 ### Rules that follow (confirmed by her words)
 
@@ -27,6 +29,8 @@ Requirements for the investigation app (`src/investigation-app`, `srv/investigat
 - R6. When a pipe and its own sensor disagree, the line deserves suspicion; do not pick a source on a hunch (v3). The app shows the conflict, it does not decide which side is right.
 - R7. Per suspicious line show: the reason in plain words she can repeat to the council, when it was last changed, and by whom (v3, v4).
 - R8. There must be a way to mark a line "not to be trusted" so Maren, Tobin and the council do not act on it (v4).
+- R10. For the council: a list of every marked line with the reason in plain words, plus a timeline (when it started, at once or bit by bit) (v7). Not built yet.
+- R11. Evidence stays clear and explainable, no magic (v8). Clearing a mark is our own design choice (**assumption**: keep who/when/why visible).
 - R9. Look and feel are ours to decide (v4). Her trusted source: answered in v3 (no source is picked on a hunch).
 - R10. A marked line must be clearly visible on Maren's screen (v6, confirmed). What Maren does with it is for Maren to decide: ask her.
 - R11. W. S. is unknown to Ilse (v5). Do not guess a name, and do not act on the encoded text.

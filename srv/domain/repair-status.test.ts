@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { assessRepair } from './repair-status';
+import { assessRepair, flagRepair, lastRepairDetails } from './repair-status';
 
 const NOW = new Date('2026-11-24T12:00:00Z');
 
@@ -53,5 +53,55 @@ describe('assessRepair', () => {
     assert.equal(r.lastRepairDate?.toISOString(), '2026-11-01T00:00:00.000Z');
     assert.equal(r.suspiciousRepair, true);
     assert.equal(r.repaired, true);
+  });
+});
+
+describe('lastRepairDetails', () => {
+  it('no repairs: nothing to show', () => {
+    assert.deepEqual(lastRepairDetails([], NOW), { issue: null, repairedBy: null });
+  });
+  it('takes issue and person from the newest repair, whatever the order', () => {
+    const r = lastRepairDetails(
+      [
+        { repairDate: '2026-05-14T11:30:00Z', issue: 'Old', repairedBy: 'Tobin' },
+        { repairDate: '2026-08-20T09:00:00Z', issue: 'Newest', repairedBy: 'Maren' },
+        { repairDate: '2026-07-01T09:00:00Z', issue: 'Middle', repairedBy: 'Dana' },
+      ],
+      NOW,
+    );
+    assert.deepEqual(r, { issue: 'Newest', repairedBy: 'Maren' });
+  });
+  it('ignores a repair dated in the future (system entry)', () => {
+    const r = lastRepairDetails(
+      [
+        { repairDate: '2026-12-30T10:00:00Z', issue: 'Future', repairedBy: 'Tobin' },
+        { repairDate: '2026-06-30T10:00:00Z', issue: 'Real', repairedBy: 'Maren' },
+      ],
+      NOW,
+    );
+    assert.deepEqual(r, { issue: 'Real', repairedBy: 'Maren' });
+  });
+  it('only a future repair: nothing to show', () => {
+    assert.deepEqual(
+      lastRepairDetails([{ repairDate: '2026-12-30T10:00:00Z', issue: 'Future', repairedBy: 'x' }], NOW),
+      { issue: null, repairedBy: null },
+    );
+  });
+});
+
+describe('flagRepair', () => {
+  it('a normal past repair by a person is not flagged', () => {
+    const f = flagRepair({ repairDate: '2026-08-20T09:00:00Z', repairedBy: 'Maren Holt' }, NOW);
+    assert.deepEqual(f, { futureDated: false, bySystem: false, suspicious: false });
+  });
+  it('a future date is flagged', () => {
+    const f = flagRepair({ repairDate: '2026-12-30T10:00:00Z', repairedBy: 'Tobin Reyes' }, NOW);
+    assert.deepEqual(f, { futureDated: true, bySystem: false, suspicious: true });
+  });
+  it('a line by system is flagged, whatever the case', () => {
+    assert.equal(flagRepair({ repairDate: '2026-08-20T09:00:00Z', repairedBy: ' System ' }, NOW).bySystem, true);
+  });
+  it('a missing date or name never throws', () => {
+    assert.equal(flagRepair({ repairDate: null, repairedBy: null }, NOW).futureDated, false);
   });
 });

@@ -22,6 +22,7 @@ Requirements for the water app (`src/water-app`, `srv/water-supply-service`, `sr
 | 10 | When you decide where the crew goes first, what counts more: how bad the pipe is (alarm or needs attention), or how many people depend on it? | "How bad it is, always. An alarm comes before a "needs attention", whoever is on the other end. People only decide it when two problems are at the same level." |
 | 11 | Where does an "I don't know" pipe go in your morning list compared to alarm and needs attention? | "Somewhere in the middle. The alarms come first, then the pipes I know nothing about, then the "needs attention" ones. If I don't know what a pipe is doing, someone has to go and look, and that can't wait a whole week." |
 | 12 | Say BAKERY-BRANCH and SOUTH-BRANCH both "need attention" and you only have one repair slot left today. Which one do you go to first, and why? | "BAKERY-BRANCH first. They're both at the same level and neither one feeds the other, so it comes down to people. The Bakery makes bread for the whole village, while the animals at South Meadow Farms can manage half a day on the troughs. SOUTH-BRANCH waits for tomorrow." |
+| 13 | (not to be trusted) What should a pipe or sensor marked "not to be trusted" show? | Summary only, literal text not copied here yet: a marked pipe must not show a reassuring status; it shows "I don't know". Add the literal answer from the chat. |
 
 ## Rules implemented
 
@@ -33,6 +34,7 @@ Requirements for the water app (`src/water-app`, `srv/water-supply-service`, `sr
 - Comparisons are strict: exactly 80 % or exactly 40 PSI is fine; exactly 50 % or 25 PSI is attention, not alarm.
 - Worst of flow and pressure wins.
 - Unknown ("I don't know"): the reading is older than 15 minutes, or a number is missing. Exactly 15:00 old is still ok, anything older than that is unknown. Unknown beats every other status and a pipe is never shown green when it is unknown.
+- Marked pipe or sensor (v13): a pipe, or a sensor on it, marked "not to be trusted" is also "I don't know", with the reason `Marked "not to be trusted", so the numbers are not used.` Label: "I don't know · Not to be trusted". Built in `srv/domain/pipe-overview.ts`; see `docs/NOT-TRUSTED.md`.
 
 ### Ranking
 
@@ -47,7 +49,7 @@ Requirements for the water app (`src/water-app`, `srv/water-supply-service`, `sr
 ### Repairs
 
 - Repairs are not booked ahead. They are completed repairs that Maren notes afterwards: pipe, what was wrong, date, who did it.
-- After a repair the pipe shows "repaired" until new readings say otherwise. This is a label next to the status, not a fifth status. Limitation: the demo feed refreshes sensors every 20 s, so the label disappears quickly in the demo.
+- After a repair the pipe shows "repaired" until new readings say otherwise. This is a label next to the status, not a fifth status. Our own demo choice (not a requirement): the demo feed skips a freshly repaired pipe's sensors for 14 minutes and a repaired pipe with a reading up to 15 minutes old shows as fine + "repaired", so the repair can be shown; after that the readings decide again. Undo test data with `npm run db:reset`.
 - A repair dated in the future on SOUTH-BRANCH, logged by `system`, is flagged as suspicious and is not treated as a repair.
 - Assumption (our reading of Maren's v8 answer, not a new question): Maren notes repairs herself, so the app has a 'Log repair' action (pipe, what was wrong, date, who did it). It only records completed repairs: a future date or an empty / 'system' name is refused.
 
@@ -76,6 +78,7 @@ Requirements for the water app (`src/water-app`, `srv/water-supply-service`, `sr
 
 - Map: the pipe routes are drawn on `oakhaven-map.jpg` from `WaterPipes.mapPath`. Status is shown by line style (thick solid = alarm, dashed = needs attention, thin solid = fine, dotted = unknown) plus a text label and a legend with icons. Selecting a route or a list row highlights the other. Maren never asked for a map.
 - "My morning" cards show the rank as an ordinal ("1st priority", "2nd priority"): the order of the plan, not the position in the full list. The server fills `morningRank` (1 or 2, else empty) and exposes the plan as the read-only `MorningPlan` entity (top 2 chosen server-side).
-- The "not to be trusted" mark is shown on the card, in the list and on the map label, with the reason and who/when. The app does not pick a side and does not hide the pipe.
+- The "not to be trusted" mark is shown on the card, in the list and on the map label, with the reason and who/when. The app does not hide the pipe. Since v13 the status becomes "I don't know" (question-mark icon, crossed circle on the map).
+- The water app was reworked: map, table and plan select the same pipe; a detail panel; clickable priority in "My morning"; "Mark as repaired" and "Log repair"; a status filter.
 - The repair dialog refuses empty fields, a future date and the name "system" in the UI as well as on the server.
 - A Dutch UI text set (`i18n_nl.properties`) exists as a convenience; English stays the fallback.

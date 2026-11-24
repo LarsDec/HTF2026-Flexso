@@ -8,6 +8,10 @@
  * It deliberately uses a plain SQL statement instead of a CQL `UPDATE`: `Sensors` is a `managed`
  * entity, and every CQL UPDATE on it would also set `modifiedAt`/`modifiedBy`. A sensor reporting
  * is not somebody editing the record, so the feed touches `lastReading` and nothing else.
+ *
+ * Repair hold (our demo choice, not a villager rule): for 14 minutes after a person logged a repair
+ * on a pipe, the feed skips that pipe's sensors, so the "repaired" state stays visible in a demo
+ * instead of the alarm returning within 20 seconds.
  */
 
 /** Sensors that report "live" while the server runs. */
@@ -20,7 +24,14 @@ const SENSOR_FEED_INTERVAL_MS = 20_000;
 const SENSORS_TABLE = 'oakhaven_curse_Sensors';
 
 /** Only `lastReading` — never the managed fields. Values are bound as parameters. */
-const STAMP_SQL = `UPDATE ${SENSORS_TABLE} SET lastReading = ? WHERE sensorID IN (${LIVE_DEMO_SENSOR_IDS.map(() => '?').join(', ')})`;
+const REPAIRS_TABLE = 'oakhaven_curse_Repairs';
+
+/** A pipe repaired by a person is "repaired" for this long: the feed does not re-stamp its sensors (demo only). */
+const REPAIR_HOLD_MS = 14 * 60 * 1000;
+
+const STAMP_SQL = `UPDATE ${SENSORS_TABLE} SET lastReading = ? WHERE sensorID IN (${LIVE_DEMO_SENSOR_IDS.map(() => '?').join(', ')})
+  AND NOT EXISTS (SELECT 1 FROM ${REPAIRS_TABLE} r WHERE r.pipe_ID = ${SENSORS_TABLE}.pipe_ID
+    AND r.repairedBy <> 'system' AND r.repairDate > ${SENSORS_TABLE}.lastReading AND r.repairDate > ? AND r.repairDate <= ?)`;
 
 /** The slice of the `cds` facade this module uses. */
 interface CdsApi {
@@ -39,7 +50,8 @@ function toCdsDateTime(date: Date): string {
 
 /** Sets `lastReading` of every {@link LIVE_DEMO_SENSOR_IDS} sensor to `now`. */
 export async function refreshLiveDemoReadings(now: Date = new Date()): Promise<void> {
-  await cds.db.run(STAMP_SQL, [toCdsDateTime(now), ...LIVE_DEMO_SENSOR_IDS]);
+  const holdFrom = toCdsDateTime(new Date(now.getTime() - REPAIR_HOLD_MS));
+  await cds.db.run(STAMP_SQL, [toCdsDateTime(now), ...LIVE_DEMO_SENSOR_IDS, holdFrom, now.toISOString()]);
 }
 
 /** Starts the feed once the server is up; failures are logged, never fatal. */

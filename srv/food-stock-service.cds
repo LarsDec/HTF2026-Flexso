@@ -10,7 +10,14 @@ service FoodStockService @(path: 'food-stock', impl: 'srv/food-stock-service') {
   // StockItems is the entity associations point to (ReorderLines/OrderProposals are views on it too).
   @readonly
   @cds.redirection.target
-  entity StockItems     as projection on db.StockItems actions {
+  entity StockItems     as projection on db.StockItems {
+    *,
+    // "Not to be trusted" marks (investigation service, srv/lib/distrusts.ts).
+    virtual null as untrusted       : Boolean,
+    virtual null as untrustedReason : String,
+    virtual null as untrustedBy     : String,
+    virtual null as untrustedAt     : Timestamp
+  } actions {
     /** Maintains the reorder attributes of an item (spec Must 4). */
     action setReorderAttributes(supplier_ID : UUID, isCritical : Boolean, marketDayMultiplier : Decimal(5, 2), inHouse : Boolean) returns StockItems;
   };
