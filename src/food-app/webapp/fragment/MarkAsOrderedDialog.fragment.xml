@@ -1,0 +1,22 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <!-- "Mark as ordered" (spec Should 8). Form state lives in the dialog's "order" JSON model. -->
+    <Dialog id="markAsOrderedDialog" title="{ parts: ['i18n>markAsOrderedTitle', 'order>/itemName'], formatter: '.formatMessage' }" contentWidth="24rem">
+        <content>
+            <form:SimpleForm id="orderForm" editable="true" layout="ColumnLayout">
+                <Label id="orderSupplierLbl" text="{i18n>orderSupplierLabel}" />
+                <Text id="orderSupplier" text="{order>/supplierName}" />
+                <Label id="orderQtyLbl" text="{ parts: ['i18n>orderQuantityLabel', 'order>/unit'], formatter: '.formatMessage' }" labelFor="orderQty" required="true" />
+                <StepInput id="orderQty" value="{order>/quantity}" min="0" step="1" displayValuePrecision="2" />
+                <Label id="orderDateLbl" text="{i18n>orderDateLabel}" labelFor="orderDate" required="true" />
+                <DatePicker id="orderDate" value="{order>/orderDate}" valueFormat="yyyy-MM-dd" displayFormat="medium" />
+            </form:SimpleForm>
+            <Text id="orderHint" text="{i18n>orderHint}" class="sapUiSmallMargin" />
+        </content>
+        <beginButton>
+            <Button id="orderConfirm" text="{i18n>confirm}" type="Emphasized" press=".onConfirm" />
+        </beginButton>
+        <endButton>
+            <Button id="orderCancel" text="{i18n>cancel}" press=".onCancel" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

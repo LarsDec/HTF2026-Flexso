@@ -1,0 +1,43 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <Dialog id="addItemDialog" title="{i18n>addItemTitle}" contentWidth="26rem">
+        <content>
+            <form:SimpleForm id="addItemForm" editable="true" layout="ColumnLayout">
+                <Label id="addItemIdLbl" text="{i18n>colItemId}" labelFor="addItemId" required="true" />
+                <Input id="addItemId" value="{edit>/itemID}" placeholder="{i18n>itemIdPlaceholder}" />
+                <Label id="addItemNameLbl" text="{i18n>colName}" labelFor="addItemName" required="true" />
+                <Input id="addItemName" value="{edit>/name}" />
+                <Label id="addItemUnitLbl" text="{i18n>colUnit}" labelFor="addItemUnit" required="true" />
+                <Input id="addItemUnit" value="{edit>/unit}" placeholder="{i18n>unitPlaceholder}" />
+                <Label id="addItemIconLbl" text="{i18n>colIcon}" labelFor="addItemIcon" />
+                <Input id="addItemIcon" value="{edit>/icon}" placeholder="{i18n>iconPlaceholder}" />
+                <Label id="addItemCurrentLbl" text="{i18n>colCurrentQuantity}" labelFor="addItemCurrent" required="true" />
+                <StepInput id="addItemCurrent" value="{edit>/currentQuantity}" min="0" step="1" displayValuePrecision="2" />
+                <Label id="addItemMinLbl" text="{i18n>colMinStock}" labelFor="addItemMin" required="true" />
+                <StepInput id="addItemMin" value="{edit>/minStockLevel}" min="0" step="1" displayValuePrecision="2" />
+                <Label id="addItemUseLbl" text="{i18n>colDailyUseField}" labelFor="addItemUse" required="true" />
+                <StepInput id="addItemUse" value="{edit>/consumptionRate}" min="0" step="0.5" displayValuePrecision="2" />
+                <Label id="addItemInHouseLbl" text="{i18n>colInHouse}" labelFor="addItemInHouse" />
+                <CheckBox id="addItemInHouse" selected="{edit>/inHouse}" />
+                <Label id="addItemSupplierLbl" text="{i18n>colSupplier}" labelFor="addItemSupplier" required="{= !${edit>/inHouse} }" />
+                <Select
+                    id="addItemSupplier"
+                    selectedKey="{edit>/supplierID}"
+                    enabled="{= !${edit>/inHouse} }"
+                    forceSelection="false"
+                    items="{ path: 'food>/Suppliers', sorter: { path: 'name' }, templateShareable: false }">
+                    <core:Item id="addItemSupplierItem" key="{food>ID}" text="{food>name}" />
+                </Select>
+                <Label id="addItemCriticalLbl" text="{i18n>colCritical}" labelFor="addItemCritical" />
+                <CheckBox id="addItemCritical" selected="{edit>/isCritical}" />
+                <Label id="addItemMultiplierLbl" text="{i18n>colMultiplier}" labelFor="addItemMultiplier" />
+                <StepInput id="addItemMultiplier" value="{edit>/marketDayMultiplier}" min="0" max="10" step="0.5" displayValuePrecision="2" />
+            </form:SimpleForm>
+        </content>
+        <beginButton>
+            <Button id="addItemSave" text="{i18n>confirm}" type="Emphasized" press=".onCreateItem" />
+        </beginButton>
+        <endButton>
+            <Button id="addItemCancel" text="{i18n>cancel}" press=".onCloseDialog" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

@@ -1,0 +1,9 @@
+<mvc:View
+    controllerName="food.pantry.controller.App"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:f="sap.f"
+    displayBlock="true"
+    height="100%">
+    <!-- Overview (begin column) → item projection (mid column), driven by the router in manifest.json -->
+    <f:FlexibleColumnLayout id="fcl" layout="{app>/layout}" backgroundDesign="Translucent" />
+</mvc:View>

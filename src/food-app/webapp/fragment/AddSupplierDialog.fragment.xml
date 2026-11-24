@@ -1,0 +1,18 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <Dialog id="addSupplierDialog" title="{i18n>addSupplierTitle}" contentWidth="22rem">
+        <content>
+            <form:SimpleForm id="addSupplierForm" editable="true" layout="ColumnLayout">
+                <Label id="addSupNameLbl" text="{i18n>colName}" labelFor="addSupName" required="true" />
+                <Input id="addSupName" value="{edit>/name}" />
+                <Label id="addSupLeadLbl" text="{i18n>colLeadTime}" labelFor="addSupLead" required="true" />
+                <StepInput id="addSupLead" value="{edit>/leadTimeDays}" min="0" max="60" description="{i18n>unitDays}" />
+            </form:SimpleForm>
+        </content>
+        <beginButton>
+            <Button id="addSupSave" text="{i18n>confirm}" type="Emphasized" press=".onCreateSupplier" />
+        </beginButton>
+        <endButton>
+            <Button id="addSupCancel" text="{i18n>cancel}" press=".onCloseDialog" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

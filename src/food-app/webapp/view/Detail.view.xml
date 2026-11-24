@@ -1,0 +1,141 @@
+<mvc:View
+    controllerName="food.pantry.controller.Detail"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:f="sap.f"
+    xmlns:core="sap.ui.core"
+    core:require="{ DateType: 'sap/ui/model/odata/type/Date' }"
+    height="100%">
+    <!-- One item: key figures, the 14-day projection (Should 7) and its open orders (Should 8).
+         The page is bound to /ReorderLines(<ID>) in Detail.controller.ts. -->
+    <f:DynamicPage id="detailPage" toggleHeaderOnTitleClick="false">
+        <f:title>
+            <f:DynamicPageTitle id="detailTitle">
+                <f:heading>
+                    <HBox id="detailHeading" alignItems="Center">
+                        <core:Icon id="detailIcon" src="{food>icon}" size="1.5rem" class="bakItemIcon sapUiSmallMarginEnd" />
+                        <Title id="detailTitleText" text="{food>name}" level="H2" wrapping="false" />
+                    </HBox>
+                </f:heading>
+                <f:actions>
+                    <Button
+                        id="detailMarkOrdered"
+                        text="{i18n>markAsOrdered}"
+                        icon="sap-icon://ti/shopping-cart-check"
+                        type="Emphasized"
+                        visible="{= !%{food>inHouse} }"
+                        press=".onMarkAsOrdered" />
+                </f:actions>
+                <f:navigationActions>
+                    <Button id="detailClose" icon="sap-icon://decline" type="Transparent" tooltip="{i18n>closeDetail}" press=".onClose" />
+                </f:navigationActions>
+            </f:DynamicPageTitle>
+        </f:title>
+
+        <f:header>
+            <f:DynamicPageHeader id="detailHeader">
+                <FlexBox id="detailFigures" wrap="Wrap" alignItems="Start">
+                    <VBox id="figStatus" class="sapUiMediumMarginEnd sapUiSmallMarginBottom">
+                        <Label id="figStatusLbl" text="{i18n>colStatus}" />
+                        <ObjectStatus
+                            id="figStatusValue"
+                            inverted="true"
+                            text="{= %{food>status} === 'LATE' ? ${i18n>statusLate} : %{food>status} === 'ORDER_TODAY' ? ${i18n>statusOrderToday} : ${i18n>statusOk} }"
+                            state="{= %{food>status} === 'LATE' ? 'Error' : %{food>status} === 'ORDER_TODAY' ? 'Warning' : 'Success' }"
+                            icon="{= %{food>status} === 'LATE' ? 'sap-icon://error' : %{food>status} === 'ORDER_TODAY' ? 'sap-icon://alert' : 'sap-icon://sys-enter-2' }" />
+                        <ObjectStatus id="figFlagBelow" text="{i18n>flagBelowMin}" icon="sap-icon://ti/arrow-down-bar" state="Warning" visible="{food>belowMinimumNow}" />
+                        <ObjectStatus id="figFlagStockOut" text="{i18n>flagStockOut}" icon="sap-icon://ti/basket-off" state="Error" visible="{food>stockOutRisk}" />
+                        <ObjectStatus id="figFlagDataError" text="{i18n>flagDataError}" icon="sap-icon://ti/database-exclamation" state="Error" visible="{food>dataError}" />
+                    </VBox>
+                    <VBox id="figOrderBy" class="sapUiMediumMarginEnd sapUiSmallMarginBottom" visible="{= !%{food>inHouse} }">
+                        <Label id="figOrderByLbl" text="{i18n>colOrderBy}" />
+                        <Text id="figOrderByDate" visible="{= !!%{food>orderByDate} }" text="{ path: 'food>orderByDate', type: 'DateType', formatOptions: { style: 'full' } }" />
+                        <Text id="figOrderByLate" visible="{= %{food>status} === 'LATE' }" text="{i18n>orderNowLate}" />
+                        <Text id="figOrderByNone" visible="{food>noOrderWithinHorizon}" text="{ parts: ['i18n>noOrderWithin', 'food>horizonDays'], formatter: '.formatMessage' }" />
+                    </VBox>
+                    <VBox id="figQty" class="sapUiMediumMarginEnd sapUiSmallMarginBottom" visible="{= !%{food>inHouse} }">
+                        <Label id="figQtyLbl" text="{i18n>colOrderQty}" />
+                        <ObjectNumber id="figQtyValue" number="{food>orderQuantity}" unit="{food>unit}" emphasized="true" />
+                    </VBox>
+                    <VBox id="figSupplier" class="sapUiMediumMarginEnd sapUiSmallMarginBottom">
+                        <Label id="figSupplierLbl" text="{i18n>colSupplier}" />
+                        <Text id="figSupplierValue" text="{= %{food>inHouse} ? ${i18n>inHouseNoOrder} : %{food>supplierName} }" />
+                        <ObjectNumber id="figLeadTime" number="{food>leadTimeDays}" unit="{i18n>unitDays}" visible="{= !%{food>inHouse} }" />
+                    </VBox>
+                    <VBox id="figArrival" class="sapUiMediumMarginEnd sapUiSmallMarginBottom" visible="{= !%{food>inHouse} }">
+                        <Label id="figArrivalLbl" text="{i18n>colArrival}" />
+                        <ObjectNumber id="figArrivalValue" number="{food>arrivalStock}" unit="{food>unit}" />
+                    </VBox>
+                </FlexBox>
+            </f:DynamicPageHeader>
+        </f:header>
+
+        <f:content>
+            <VBox id="detailContent">
+                <Table id="projectionTable" contextualWidth="Auto" noDataText="{i18n>noData}" items="{ path: 'food>value', templateShareable: false }">
+                    <headerToolbar>
+                        <OverflowToolbar id="projectionToolbar">
+                            <Title id="projectionTitle" text="{i18n>detailProjectionTitle}" level="H3" />
+                        </OverflowToolbar>
+                    </headerToolbar>
+                    <columns>
+                        <Column id="projDateCol"><Text id="projDateHdr" text="{i18n>colDate}" /></Column>
+                        <Column id="projUseCol" hAlign="End"><Text id="projUseHdr" text="{i18n>colUse}" /></Column>
+                        <Column id="projIncomingCol" hAlign="End" minScreenWidth="30rem" demandPopin="true"><Text id="projIncomingHdr" text="{i18n>colIncoming}" /></Column>
+                        <Column id="projStockCol" hAlign="End"><Text id="projStockHdr" text="{i18n>colExpected}" /></Column>
+                        <Column id="projMinCol" hAlign="End" minScreenWidth="36rem" demandPopin="true"><Text id="projMinHdr" text="{i18n>colMinLine}" /></Column>
+                        <Column id="projStatusCol"><Text id="projStatusHdr" text="{i18n>colStatus}" /></Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem id="projectionRow" highlight="{= %{food>belowMinimum} ? 'Error' : 'None' }">
+                            <cells>
+                                <VBox id="projDate">
+                                    <Text id="projDateText" text="{ path: 'food>date', type: 'DateType', formatOptions: { pattern: 'EEE d MMM' } }" />
+                                    <ObjectStatus id="projMarket" text="{i18n>marketDay}" icon="sap-icon://ti/building-store" state="Information" visible="{food>isMarketDay}" />
+                                </VBox>
+                                <ObjectNumber id="projUse" number="{food>use}" unit="{food>unit}" />
+                                <ObjectNumber id="projIncoming" number="{food>incoming}" unit="{food>unit}" />
+                                <ObjectNumber id="projStock" number="{food>expectedStock}" unit="{food>unit}" emphasized="true" state="{= %{food>belowMinimum} ? 'Error' : 'Success' }" />
+                                <ObjectNumber id="projMin" number="{food>minStockLevel}" unit="{food>unit}" />
+                                <ObjectStatus
+                                    id="projStatus"
+                                    text="{= %{food>belowMinimum} ? ${i18n>belowMinimum} : ${i18n>aboveMinimum} }"
+                                    state="{= %{food>belowMinimum} ? 'Error' : 'Success' }"
+                                    icon="{= %{food>belowMinimum} ? 'sap-icon://ti/arrow-down-bar' : 'sap-icon://sys-enter-2' }" />
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+
+                <Table
+                    id="ordersTable"
+                    contextualWidth="Auto"
+                    class="sapUiMediumMarginTop"
+                    noDataText="{i18n>noOpenOrders}"
+                    items="{ path: 'food>/PurchaseOrders', sorter: { path: 'expectedArrival' }, suspended: true, templateShareable: false }">
+                    <headerToolbar>
+                        <OverflowToolbar id="ordersToolbar">
+                            <Title id="ordersTitle" text="{i18n>openOrdersTitle}" level="H3" />
+                        </OverflowToolbar>
+                    </headerToolbar>
+                    <columns>
+                        <Column id="ordDateCol"><Text id="ordDateHdr" text="{i18n>colOrderDate}" /></Column>
+                        <Column id="ordArrivalCol"><Text id="ordArrivalHdr" text="{i18n>colExpectedArrival}" /></Column>
+                        <Column id="ordQtyCol" hAlign="End"><Text id="ordQtyHdr" text="{i18n>colQuantity}" /></Column>
+                        <Column id="ordActionCol" hAlign="End"><Text id="ordActionHdr" text="" /></Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem id="orderRow">
+                            <cells>
+                                <Text id="ordDate" text="{ path: 'food>orderDate', type: 'DateType', formatOptions: { style: 'medium' } }" />
+                                <Text id="ordArrival" text="{ path: 'food>expectedArrival', type: 'DateType', formatOptions: { style: 'medium' } }" />
+                                <ObjectNumber id="ordQty" number="{food>quantity}" unit="{food>unit}" />
+                                <Button id="ordReceived" text="{i18n>markAsReceived}" icon="sap-icon://ti/package-import" tooltip="{i18n>markAsReceivedTooltip}" press=".onMarkAsReceived" />
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </VBox>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>

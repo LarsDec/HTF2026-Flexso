@@ -1,0 +1,29 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <Dialog id="editItemDialog" title="{ parts: ['i18n>editItemTitle', 'edit>/name'], formatter: '.formatMessage' }" contentWidth="24rem">
+        <content>
+            <form:SimpleForm id="editItemForm" editable="true" layout="ColumnLayout">
+                <Label id="editItemInHouseLbl" text="{i18n>colInHouse}" labelFor="editItemInHouse" />
+                <CheckBox id="editItemInHouse" selected="{edit>/inHouse}" />
+                <Label id="editItemSupplierLbl" text="{i18n>colSupplier}" labelFor="editItemSupplier" required="{= !${edit>/inHouse} }" />
+                <Select
+                    id="editItemSupplier"
+                    selectedKey="{edit>/supplierID}"
+                    enabled="{= !${edit>/inHouse} }"
+                    forceSelection="false"
+                    items="{ path: 'food>/Suppliers', sorter: { path: 'name' }, templateShareable: false }">
+                    <core:Item id="editItemSupplierItem" key="{food>ID}" text="{food>name}" />
+                </Select>
+                <Label id="editItemCriticalLbl" text="{i18n>colCritical}" labelFor="editItemCritical" />
+                <CheckBox id="editItemCritical" selected="{edit>/isCritical}" />
+                <Label id="editItemMultiplierLbl" text="{i18n>colMultiplier}" labelFor="editItemMultiplier" />
+                <StepInput id="editItemMultiplier" value="{edit>/marketDayMultiplier}" min="0" max="10" step="0.5" displayValuePrecision="2" />
+            </form:SimpleForm>
+        </content>
+        <beginButton>
+            <Button id="editItemSave" text="{i18n>confirm}" type="Emphasized" press=".onSaveItem" />
+        </beginButton>
+        <endButton>
+            <Button id="editItemCancel" text="{i18n>cancel}" press=".onCloseDialog" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

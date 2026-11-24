@@ -1,0 +1,2 @@
+ID,coverDays,horizonDays,marketWeekday,digestTime,quietHoursStart,quietHoursEnd,timeZone,recipientEmail
+70000000-0000-4000-8000-000000000001,7,60,6,05:00:00,20:00:00,05:00:00,Europe/Brussels,

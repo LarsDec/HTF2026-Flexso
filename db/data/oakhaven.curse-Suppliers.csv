@@ -1,0 +1,5 @@
+ID,name,leadTimeDays,createdAt,createdBy,modifiedAt,modifiedBy
+60000000-0000-4000-8000-000000000001,Local Dairy Farm,1,2026-11-24T08:00:00Z,tobin.reyes,2026-11-24T08:00:00Z,tobin.reyes
+60000000-0000-4000-8000-000000000002,South Meadow Farms,2,2026-11-24T08:00:00Z,tobin.reyes,2026-11-24T08:00:00Z,tobin.reyes
+60000000-0000-4000-8000-000000000003,North Mill,3,2026-11-24T08:00:00Z,tobin.reyes,2026-11-24T08:00:00Z,tobin.reyes
+60000000-0000-4000-8000-000000000004,Travelling merchant,7,2026-11-24T08:00:00Z,tobin.reyes,2026-11-24T08:00:00Z,tobin.reyes

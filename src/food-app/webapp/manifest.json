@@ -1,0 +1,97 @@
+{
+  "_version": "2.0.0",
+  "sap.app": {
+    "id": "food.pantry",
+    "type": "application",
+    "i18n": {
+      "bundleUrl": "i18n/i18n.properties",
+      "supportedLocales": [""],
+      "fallbackLocale": ""
+    },
+    "applicationVersion": { "version": "0.1.0" },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "dataSources": {
+      "foodStockService": {
+        "uri": "/odata/v4/food-stock/",
+        "type": "OData",
+        "settings": { "odataVersion": "4.0" }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "display": {
+          "semanticObject": "FoodPantry",
+          "action": "display",
+          "title": "{{appTitle}}",
+          "subTitle": "{{appDescription}}",
+          "icon": "sap-icon://ti/bread",
+          "signature": { "parameters": {}, "additionalParameters": "allowed" }
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": { "icon": "sap-icon://ti/bread" },
+    "deviceTypes": { "desktop": true, "tablet": true, "phone": true },
+    "fullWidth": true
+  },
+  "sap.ui5": {
+    "rootView": {
+      "viewName": "food.pantry.view.App",
+      "type": "XML",
+      "id": "app"
+    },
+    "dependencies": {
+      "minUI5Version": "1.136.0",
+      "libs": {
+        "sap.ui.core": {},
+        "sap.m": {},
+        "sap.f": {},
+        "sap.ui.layout": {}
+      }
+    },
+    "handleValidation": true,
+    "contentDensities": { "compact": true, "cozy": true },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "food.pantry.i18n.i18n",
+          "async": true,
+          "supportedLocales": [""],
+          "fallbackLocale": ""
+        }
+      },
+      "food": {
+        "dataSource": "foodStockService",
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      }
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.f.routing.Router",
+        "type": "View",
+        "viewType": "XML",
+        "path": "food.pantry.view",
+        "controlId": "fcl"
+      },
+      "routes": [
+        { "pattern": "", "name": "overview", "target": ["overview"] },
+        { "pattern": "item/{id}", "name": "detail", "target": ["overview", "detail"] }
+      ],
+      "targets": {
+        "overview": { "name": "Overview", "id": "overview", "controlAggregation": "beginColumnPages" },
+        "detail": { "name": "Detail", "id": "detail", "controlAggregation": "midColumnPages" }
+      }
+    },
+    "resources": {
+      "css": [{ "uri": "css/style.css" }]
+    }
+  }
+}

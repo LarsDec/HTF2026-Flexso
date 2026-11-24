@@ -94,6 +94,12 @@ entity StockItems : cuid, managed {
   minStockLevel   : Decimal(9, 2);   // in `unit` — the level the village wants to stay above
   consumptionRate : Decimal(9, 2);   // `unit` per day the village uses up
   receivals       : Composition of many StockReceivals on receivals.item = $self;
+  // --- Bakery reorder assistant (BakkerySpec.md) ---
+  supplier            : Association to Suppliers;      // who delivers it (none for in-house items)
+  isCritical          : Boolean default false;         // bread ingredient: flour, milk, butter
+  marketDayMultiplier : Decimal(5, 2) default 1;       // use on market day = consumptionRate × this
+  inHouse             : Boolean default false;         // made in the bakery (bread): never ordered
+  orders              : Composition of many PurchaseOrders on orders.item = $self;
 }
 
 /** A delivery of a stock item. (No rows yet.) */
@@ -109,4 +115,73 @@ entity Notifications : cuid, managed {
   item         : Association to StockItems;
   message      : String;
   acknowledged : Boolean default false;
+}
+
+// ---------------------------------------------------------------------------
+// Bakery reorder assistant — suppliers, orders, settings and notification state
+// ---------------------------------------------------------------------------
+
+/** A supplier of the pantry. */
+entity Suppliers : cuid, managed {
+  name         : String;
+  leadTimeDays : Integer; // whole days from order to pantry
+  items        : Association to many StockItems on items.supplier = $self;
+}
+
+/** Life cycle of a purchase order. */
+type PurchaseOrderStatus : String enum {
+  open;     // ordered, counts as incoming stock
+  received; // booked into StockItems.currentQuantity
+}
+
+/** An order Tobin marked as placed ("Mark as ordered"). */
+entity PurchaseOrders : cuid, managed {
+  item            : Association to StockItems;
+  supplier        : Association to Suppliers;
+  quantity        : Decimal(9, 2); // in the item's `unit`
+  orderDate       : Date;
+  expectedArrival : Date;          // orderDate + supplier lead time
+  status          : PurchaseOrderStatus default 'open';
+  receivedAt      : DateTime;
+}
+
+/** Settings of the reorder calculation and the notifications. One row. */
+entity PantrySettings : cuid, managed {
+  coverDays       : Integer default 7;                 // R5: ordinary days on top of the minimum
+  horizonDays     : Integer default 60;                // R3: how far the order-by date is searched
+  marketWeekday   : Integer default 6;                 // R1: 0 = Sunday … 6 = Saturday
+  digestTime      : Time default '05:00:00';           // N2: local time of the daily digest
+  quietHoursStart : Time default '20:00:00';           // N3: no immediate messages from …
+  quietHoursEnd   : Time default '05:00:00';           //     … until
+  timeZone        : String default 'Europe/Brussels';  // the pantry's clock
+  recipientEmail  : String;                            // N7: who gets the email (empty = not set)
+}
+
+/** R4 status of a stock item. */
+type ReorderStatus : String enum {
+  OK;
+  ORDER_TODAY;
+  LATE;
+}
+
+/** N1: what Tobin was last told about an item. */
+entity NotificationStates : cuid, managed {
+  item            : Association to StockItems;
+  status          : ReorderStatus;
+  dataError       : Boolean default false;
+  lastImmediateAt : DateTime; // N3: last immediate message
+}
+
+/** N2: date of the last digest run. One row. */
+entity NotifierCheckpoints : cuid, managed {
+  lastDigestDate : Date;
+}
+
+/** Email outbox: the messages the email channel produced (no mail server in this setup). */
+entity OutboundMessages : cuid, managed {
+  channel   : String;  // 'email'
+  kind      : String;  // 'digest' | 'immediate'
+  recipient : String;
+  subject   : String;
+  body      : LargeString;
 }

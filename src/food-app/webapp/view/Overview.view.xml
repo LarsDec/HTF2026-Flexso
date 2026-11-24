@@ -1,0 +1,357 @@
+<mvc:View
+    controllerName="food.pantry.controller.Overview"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:f="sap.f"
+    xmlns:core="sap.ui.core"
+    xmlns:form="sap.ui.layout.form"
+    core:require="{
+        DateType: 'sap/ui/model/odata/type/Date',
+        DateTimeOffset: 'sap/ui/model/odata/type/DateTimeOffset'
+    }"
+    height="100%">
+    <f:DynamicPage id="overviewPage" toggleHeaderOnTitleClick="true">
+        <f:title>
+            <f:DynamicPageTitle id="overviewTitle">
+                <f:heading>
+                    <HBox id="overviewHeading" alignItems="Center">
+                        <core:Icon id="overviewLogo" src="sap-icon://ti/bread" size="1.75rem" class="bakLogo sapUiSmallMarginEnd" />
+                        <Title id="overviewTitleText" text="{i18n>appTitle}" level="H1" wrapping="false" />
+                    </HBox>
+                </f:heading>
+                <f:expandedContent>
+                    <Label id="overviewSubtitle" text="{i18n>pageSubtitle}" />
+                </f:expandedContent>
+                <f:actions>
+                    <Label id="todayLabel" text="{i18n>todayLabel}" labelFor="todayPicker" class="sapUiTinyMarginEnd" />
+                    <DatePicker
+                        id="todayPicker"
+                        width="11rem"
+                        value="{app>/today}"
+                        valueFormat="yyyy-MM-dd"
+                        displayFormat="medium"
+                        tooltip="{i18n>todayTooltip}" />
+                </f:actions>
+            </f:DynamicPageTitle>
+        </f:title>
+
+        <f:header>
+            <f:DynamicPageHeader id="overviewHeader">
+                <Text id="legend" text="{i18n>legendText}" class="bakLegend" />
+                <MessageStrip
+                    id="forecastHint"
+                    type="Information"
+                    showIcon="true"
+                    class="sapUiTinyMarginTop"
+                    visible="{= %{app>/today} > %{app>/realToday} }"
+                    text="{ parts: ['i18n>forecastHint', { path: 'app>/today', type: 'DateType', formatOptions: { style: 'medium' } }], formatter: '.formatMessage' }" />
+            </f:DynamicPageHeader>
+        </f:header>
+
+        <f:content>
+            <IconTabBar id="tabs" expandable="false" headerBackgroundDesign="Transparent" class="sapUiResponsiveContentPadding">
+                <items>
+                    <!-- ===================== Reorder overview (Must 1–3) ===================== -->
+                    <IconTabFilter id="tabOverview" key="overview" icon="sap-icon://ti/list-check" text="{i18n>tabOverview}">
+                        <Table
+                            id="linesTable"
+                            contextualWidth="Auto"
+                            noDataText="{i18n>noData}"
+                            popinLayout="GridSmall"
+                            items="{ path: 'food>/ReorderLines', suspended: true, templateShareable: false }">
+                            <columns>
+                                <Column id="colItem"><Text id="colItemHdr" text="{i18n>colItem}" /></Column>
+                                <Column id="colSupplier" minScreenWidth="Desktop" demandPopin="true"><Text id="colSupplierHdr" text="{i18n>colSupplier}" /></Column>
+                                <Column id="colLeadTime" hAlign="End" minScreenWidth="Desktop" demandPopin="true"><Text id="colLeadTimeHdr" text="{i18n>colLeadTime}" /></Column>
+                                <Column id="colCurrent" hAlign="End"><Text id="colCurrentHdr" text="{i18n>colCurrent}" /></Column>
+                                <Column id="colMin" hAlign="End" minScreenWidth="Desktop" demandPopin="true"><Text id="colMinHdr" text="{i18n>colMin}" /></Column>
+                                <Column id="colDailyUse" hAlign="End" minScreenWidth="Desktop" demandPopin="true"><Text id="colDailyUseHdr" text="{i18n>colDailyUse}" /></Column>
+                                <Column id="colArrival" hAlign="End" minScreenWidth="Desktop" demandPopin="true"><Text id="colArrivalHdr" text="{i18n>colArrival}" /></Column>
+                                <Column id="colStatus"><Text id="colStatusHdr" text="{i18n>colStatus}" /></Column>
+                                <Column id="colOrderBy"><Text id="colOrderByHdr" text="{i18n>colOrderBy}" /></Column>
+                                <Column id="colOrderQty" hAlign="End"><Text id="colOrderQtyHdr" text="{i18n>colOrderQty}" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem id="lineRow" type="Navigation" press=".onLinePress">
+                                    <cells>
+                                        <HBox id="lineItem" alignItems="Center">
+                                            <core:Icon id="lineIcon" src="{food>icon}" size="1.25rem" class="bakItemIcon sapUiSmallMarginEnd" />
+                                            <VBox id="lineItemText">
+                                                <ObjectIdentifier id="lineName" title="{food>name}" text="{food>itemID}" />
+                                                <ObjectStatus id="lineCritical" text="{i18n>flagCritical}" icon="sap-icon://ti/star" state="Information" visible="{food>isCritical}" />
+                                            </VBox>
+                                        </HBox>
+                                        <Text id="lineSupplier" text="{= %{food>inHouse} ? ${i18n>inHouse} : %{food>supplierName} }" />
+                                        <ObjectNumber id="lineLeadTime" number="{food>leadTimeDays}" unit="{i18n>unitDays}" visible="{= !%{food>inHouse} }" />
+                                        <VBox id="lineCurrentBox">
+                                            <ObjectNumber id="lineCurrent" number="{= %{food>isForecast} ? %{food>forecastStock} : %{food>currentQuantity} }" unit="{food>unit}" state="{= %{food>dataError} ? 'Error' : 'None' }" />
+                                            <Text
+                                                id="lineCurrentForecast"
+                                                class="sapUiTinyMarginTop"
+                                                visible="{= !!%{food>isForecast} }"
+                                                text="{ parts: ['i18n>expectedOn', { path: 'app>/today', type: 'DateType', formatOptions: { style: 'medium' } }], formatter: '.formatMessage' }" />
+                                        </VBox>
+                                        <ObjectNumber id="lineMin" number="{food>minStockLevel}" unit="{food>unit}" />
+                                        <ObjectNumber id="lineDailyUse" number="{food>consumptionRate}" unit="{food>unit}" />
+                                        <ObjectNumber
+                                            id="lineArrival"
+                                            number="{food>arrivalStock}"
+                                            unit="{food>unit}"
+                                            visible="{= !%{food>inHouse} }"
+                                            state="{= %{food>status} === 'LATE' ? 'Error' : %{food>status} === 'ORDER_TODAY' ? 'Warning' : 'None' }" />
+                                        <VBox id="lineStatusBox">
+                                            <ObjectStatus
+                                                id="lineStatus"
+                                                inverted="true"
+                                                text="{= %{food>status} === 'LATE' ? ${i18n>statusLate} : %{food>status} === 'ORDER_TODAY' ? ${i18n>statusOrderToday} : ${i18n>statusOk} }"
+                                                state="{= %{food>status} === 'LATE' ? 'Error' : %{food>status} === 'ORDER_TODAY' ? 'Warning' : 'Success' }"
+                                                icon="{= %{food>status} === 'LATE' ? 'sap-icon://error' : %{food>status} === 'ORDER_TODAY' ? 'sap-icon://alert' : 'sap-icon://sys-enter-2' }" />
+                                            <ObjectStatus id="lineFlagBelow" text="{i18n>flagBelowMin}" icon="sap-icon://ti/arrow-down-bar" state="Warning" visible="{food>belowMinimumNow}" />
+                                            <ObjectStatus id="lineFlagStockOut" text="{i18n>flagStockOut}" icon="sap-icon://ti/basket-off" state="Error" visible="{food>stockOutRisk}" />
+                                            <ObjectStatus id="lineFlagDataError" text="{i18n>flagDataError}" icon="sap-icon://ti/database-exclamation" state="Error" visible="{food>dataError}" />
+                                            <ObjectStatus
+                                                id="lineOrdered"
+                                                icon="sap-icon://ti/truck-delivery"
+                                                state="Information"
+                                                visible="{= !!%{food>nextArrival} }"
+                                                text="{ parts: ['i18n>orderedArrives', { path: 'food>nextArrival', type: 'DateType', formatOptions: { style: 'medium' } }], formatter: '.formatMessage' }" />
+                                        </VBox>
+                                        <VBox id="lineOrderByBox">
+                                            <Text id="lineOrderByDate" visible="{= !!%{food>orderByDate} }" text="{ path: 'food>orderByDate', type: 'DateType', formatOptions: { style: 'medium' } }" />
+                                            <Text id="lineOrderByLate" visible="{= %{food>status} === 'LATE' &amp;&amp; !%{food>inHouse} }" text="{i18n>orderNowLate}" />
+                                            <Text id="lineOrderByInHouse" visible="{food>inHouse}" text="{i18n>inHouseNoOrder}" />
+                                            <Text
+                                                id="lineOrderByNone"
+                                                visible="{food>noOrderWithinHorizon}"
+                                                text="{ parts: ['i18n>noOrderWithin', 'food>horizonDays'], formatter: '.formatMessage' }" />
+                                        </VBox>
+                                        <ObjectNumber
+                                            id="lineOrderQty"
+                                            number="{food>orderQuantity}"
+                                            unit="{food>unit}"
+                                            emphasized="true"
+                                            visible="{= !%{food>inHouse} }"
+                                            state="{= %{food>status} === 'OK' ? 'None' : 'Information' }" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </IconTabFilter>
+
+                    <!-- ===================== Orders by supplier (Should 6) ===================== -->
+                    <IconTabFilter id="tabBySupplier" key="bySupplier" icon="sap-icon://ti/truck" text="{i18n>tabBySupplier}">
+                        <Text id="bySupplierIntro" text="{i18n>bySupplierIntro}" class="sapUiSmallMarginBottom" />
+                        <Table
+                            id="proposalsTable"
+                            contextualWidth="Auto"
+                            noDataText="{i18n>noOrders}"
+                            items="{ path: 'food>/OrderProposals', sorter: { path: 'supplierName', group: true }, suspended: true, templateShareable: false }">
+                            <columns>
+                                <Column id="propItemCol"><Text id="propItemHdr" text="{i18n>colItem}" /></Column>
+                                <Column id="propQtyCol" hAlign="End"><Text id="propQtyHdr" text="{i18n>colQuantity}" /></Column>
+                                <Column id="propStatusCol" minScreenWidth="Tablet" demandPopin="true"><Text id="propStatusHdr" text="{i18n>colStatus}" /></Column>
+                                <Column id="propActionCol" hAlign="End"><Text id="propActionHdr" text="" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem id="proposalRow">
+                                    <cells>
+                                        <HBox id="propItem" alignItems="Center">
+                                            <core:Icon id="propIcon" src="{food>icon}" size="1.25rem" class="bakItemIcon sapUiSmallMarginEnd" />
+                                            <ObjectIdentifier id="propName" title="{food>name}" text="{food>itemID}" />
+                                        </HBox>
+                                        <ObjectNumber id="propQty" number="{food>orderQuantity}" unit="{food>unit}" emphasized="true" />
+                                        <ObjectStatus
+                                            id="propStatus"
+                                            text="{= %{food>status} === 'LATE' ? ${i18n>statusLate} : ${i18n>statusOrderToday} }"
+                                            state="{= %{food>status} === 'LATE' ? 'Error' : 'Warning' }"
+                                            icon="{= %{food>status} === 'LATE' ? 'sap-icon://error' : 'sap-icon://alert' }" />
+                                        <Button id="propMarkOrdered" text="{i18n>markAsOrdered}" icon="sap-icon://ti/shopping-cart-check" press=".onMarkAsOrdered" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </IconTabFilter>
+
+                    <!-- ===================== Messages (N7: in-app + e-mail outbox) ===================== -->
+                    <IconTabFilter id="tabMessages" key="messages" icon="sap-icon://ti/bell" text="{i18n>tabMessages}">
+                        <Table
+                            id="notificationsTable"
+                            noDataText="{i18n>noMessages}"
+                            items="{ path: 'food>/Notifications', sorter: { path: 'createdAt', descending: true }, templateShareable: false }">
+                            <headerToolbar>
+                                <OverflowToolbar id="notificationsToolbar">
+                                    <Title id="notificationsTitle" text="{i18n>messagesInApp}" level="H2" />
+                                    <ToolbarSpacer id="notificationsSpacer" />
+                                    <Button id="runCheck" text="{i18n>runCheck}" icon="sap-icon://ti/refresh" press=".onRunCheck" />
+                                </OverflowToolbar>
+                            </headerToolbar>
+                            <columns>
+                                <Column id="noteReceivedCol" width="12rem"><Text id="noteReceivedHdr" text="{i18n>colReceived}" /></Column>
+                                <Column id="noteMessageCol"><Text id="noteMessageHdr" text="{i18n>colMessage}" /></Column>
+                                <Column id="noteReadCol" width="8rem"><Text id="noteReadHdr" text="{i18n>colRead}" /></Column>
+                                <Column id="noteActionCol" width="4rem" hAlign="End"><Text id="noteActionHdr" text="" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem id="notificationRow">
+                                    <cells>
+                                        <Text id="noteReceived" text="{ path: 'food>createdAt', type: 'DateTimeOffset', formatOptions: { style: 'medium' } }" />
+                                        <Text id="noteMessage" text="{food>message}" />
+                                        <ObjectStatus
+                                            id="noteRead"
+                                            text="{= %{food>acknowledged} ? ${i18n>readYes} : ${i18n>readNo} }"
+                                            state="{= %{food>acknowledged} ? 'None' : 'Information' }"
+                                            icon="{= %{food>acknowledged} ? 'sap-icon://ti/mail-opened' : 'sap-icon://ti/mail' }" />
+                                        <Button
+                                            id="noteAcknowledge"
+                                            icon="sap-icon://ti/check"
+                                            type="Transparent"
+                                            tooltip="{i18n>acknowledge}"
+                                            visible="{= !%{food>acknowledged} }"
+                                            press=".onAcknowledge" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+
+                        <Table
+                            id="outboxTable"
+                            class="sapUiMediumMarginTop"
+                            noDataText="{i18n>noMessages}"
+                            items="{ path: 'food>/OutboundMessages', sorter: { path: 'createdAt', descending: true }, templateShareable: false }">
+                            <headerToolbar>
+                                <OverflowToolbar id="outboxToolbar">
+                                    <Title id="outboxTitle" text="{i18n>messagesOutbox}" level="H2" />
+                                </OverflowToolbar>
+                            </headerToolbar>
+                            <infoToolbar>
+                                <OverflowToolbar id="outboxInfo">
+                                    <Text id="outboxHint" text="{i18n>messagesOutboxHint}" />
+                                </OverflowToolbar>
+                            </infoToolbar>
+                            <columns>
+                                <Column id="outSentCol" width="12rem"><Text id="outSentHdr" text="{i18n>colSent}" /></Column>
+                                <Column id="outSubjectCol"><Text id="outSubjectHdr" text="{i18n>colSubject}" /></Column>
+                                <Column id="outRecipientCol" minScreenWidth="Tablet" demandPopin="true"><Text id="outRecipientHdr" text="{i18n>colRecipient}" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem id="outboxRow">
+                                    <cells>
+                                        <Text id="outSent" text="{ path: 'food>createdAt', type: 'DateTimeOffset', formatOptions: { style: 'medium' } }" />
+                                        <VBox id="outContent">
+                                            <Text id="outSubject" text="{food>subject}" class="bakSubject" />
+                                            <Text id="outBody" text="{food>body}" renderWhitespace="true" />
+                                        </VBox>
+                                        <Text id="outRecipient" text="{= ${food>recipient} || ${i18n>recipientNotSet} }" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </IconTabFilter>
+
+                    <!-- ===================== Settings (Must 4, R5 "7", N2/N3/N7 settings) ===================== -->
+                    <IconTabFilter id="tabSettings" key="settings" icon="sap-icon://ti/settings" text="{i18n>tabSettings}">
+                        <form:SimpleForm
+                            id="settingsForm"
+                            editable="false"
+                            layout="ColumnLayout"
+                            binding="{food>/PantrySettings(70000000-0000-4000-8000-000000000001)}">
+                            <form:toolbar>
+                                <OverflowToolbar id="settingsToolbar">
+                                    <Title id="settingsTitle" text="{i18n>settingsTitle}" level="H2" />
+                                    <ToolbarSpacer id="settingsSpacer" />
+                                    <Button id="editSettings" icon="sap-icon://edit" tooltip="{i18n>edit}" type="Transparent" press=".onEditSettings" />
+                                </OverflowToolbar>
+                            </form:toolbar>
+                            <form:content>
+                                <Label id="setCoverLbl" text="{i18n>settingCoverDays}" />
+                                <ObjectNumber id="setCover" number="{food>coverDays}" unit="{i18n>unitDays}" />
+                                <Label id="setHorizonLbl" text="{i18n>settingHorizon}" />
+                                <ObjectNumber id="setHorizon" number="{food>horizonDays}" unit="{i18n>unitDays}" />
+                                <Label id="setMarketLbl" text="{i18n>settingMarketDay}" />
+                                <Text id="setMarket" text="{ parts: ['food>marketWeekday'], formatter: '.formatWeekday' }" />
+                                <Label id="setDigestLbl" text="{i18n>settingDigestTime}" />
+                                <Text id="setDigest" text="{food>digestTime}" />
+                                <Label id="setQuietLbl" text="{i18n>settingQuietStart}" />
+                                <Text id="setQuietStart" text="{food>quietHoursStart}" />
+                                <Label id="setQuietEndLbl" text="{i18n>settingQuietEnd}" />
+                                <Text id="setQuietEnd" text="{food>quietHoursEnd}" />
+                                <Label id="setTzLbl" text="{i18n>settingTimeZone}" />
+                                <Text id="setTz" text="{food>timeZone}" />
+                                <Label id="setRecipientLbl" text="{i18n>settingRecipient}" />
+                                <Text id="setRecipient" text="{= ${food>recipientEmail} || ${i18n>recipientNotSet} }" />
+                            </form:content>
+                        </form:SimpleForm>
+
+                        <Table
+                            id="suppliersTable"
+                            contextualWidth="Auto"
+                            class="sapUiMediumMarginTop"
+                            noDataText="{i18n>noData}"
+                            items="{ path: 'food>/Suppliers', sorter: { path: 'name' }, templateShareable: false }">
+                            <headerToolbar>
+                                <OverflowToolbar id="suppliersToolbar">
+                                    <Title id="suppliersTitle" text="{i18n>suppliersTitle}" level="H2" />
+                                    <ToolbarSpacer id="suppliersSpacer" />
+                                    <Button id="supAdd" icon="sap-icon://add" text="{i18n>add}" type="Transparent" press=".onAddSupplier" />
+                                </OverflowToolbar>
+                            </headerToolbar>
+                            <columns>
+                                <Column id="supNameCol"><Text id="supNameHdr" text="{i18n>colName}" /></Column>
+                                <Column id="supLeadCol" hAlign="End"><Text id="supLeadHdr" text="{i18n>colLeadTime}" /></Column>
+                                <Column id="supEditCol" width="4rem" hAlign="End"><Text id="supEditHdr" text="" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem id="supplierRow">
+                                    <cells>
+                                        <Text id="supName" text="{food>name}" />
+                                        <ObjectNumber id="supLead" number="{food>leadTimeDays}" unit="{i18n>unitDays}" />
+                                        <Button id="supEdit" icon="sap-icon://edit" tooltip="{i18n>edit}" type="Transparent" press=".onEditSupplier" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+
+                        <Table
+                            id="itemsTable"
+                            contextualWidth="Auto"
+                            class="sapUiMediumMarginTop"
+                            noDataText="{i18n>noData}"
+                            items="{ path: 'food>/StockItems', sorter: { path: 'name' }, templateShareable: false }">
+                            <headerToolbar>
+                                <OverflowToolbar id="itemsToolbar">
+                                    <Title id="itemsTitle" text="{i18n>itemsTitle}" level="H2" />
+                                    <ToolbarSpacer id="itemsSpacer" />
+                                    <Button id="itmAdd" icon="sap-icon://add" text="{i18n>add}" type="Transparent" press=".onAddItem" />
+                                </OverflowToolbar>
+                            </headerToolbar>
+                            <columns>
+                                <Column id="itmNameCol"><Text id="itmNameHdr" text="{i18n>colItem}" /></Column>
+                                <Column id="itmSupplierCol"><Text id="itmSupplierHdr" text="{i18n>colSupplier}" /></Column>
+                                <Column id="itmCriticalCol"><Text id="itmCriticalHdr" text="{i18n>colCritical}" /></Column>
+                                <Column id="itmMultiplierCol" hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text id="itmMultiplierHdr" text="{i18n>colMultiplier}" /></Column>
+                                <Column id="itmInHouseCol" minScreenWidth="Tablet" demandPopin="true"><Text id="itmInHouseHdr" text="{i18n>colInHouse}" /></Column>
+                                <Column id="itmEditCol" width="4rem" hAlign="End"><Text id="itmEditHdr" text="" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem id="itemRow">
+                                    <cells>
+                                        <ObjectIdentifier id="itmName" title="{food>name}" text="{food>itemID}" />
+                                        <Text id="itmSupplier" text="{= ${food>supplier/name} || ${i18n>noSupplier} }" />
+                                        <ObjectStatus
+                                            id="itmCritical"
+                                            text="{= %{food>isCritical} ? ${i18n>yes} : ${i18n>no} }"
+                                            icon="{= %{food>isCritical} ? 'sap-icon://ti/star' : '' }"
+                                            state="{= %{food>isCritical} ? 'Information' : 'None' }" />
+                                        <ObjectNumber id="itmMultiplier" number="{food>marketDayMultiplier}" unit="×" />
+                                        <Text id="itmInHouse" text="{= %{food>inHouse} ? ${i18n>yes} : ${i18n>no} }" />
+                                        <Button id="itmEdit" icon="sap-icon://edit" tooltip="{i18n>edit}" type="Transparent" press=".onEditItem" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </IconTabFilter>
+                </items>
+            </IconTabBar>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>

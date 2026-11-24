@@ -1,0 +1,38 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <Dialog id="editSettingsDialog" title="{i18n>editSettingsTitle}" contentWidth="28rem">
+        <content>
+            <form:SimpleForm id="editSettingsForm" editable="true" layout="ColumnLayout">
+                <Label id="editCoverLbl" text="{i18n>settingCoverDays}" labelFor="editCover" />
+                <StepInput id="editCover" value="{edit>/coverDays}" min="0" max="60" description="{i18n>unitDays}" />
+                <Label id="editHorizonLbl" text="{i18n>settingHorizon}" labelFor="editHorizon" />
+                <StepInput id="editHorizon" value="{edit>/horizonDays}" min="1" max="365" description="{i18n>unitDays}" />
+                <Label id="editMarketLbl" text="{i18n>settingMarketDay}" labelFor="editMarket" />
+                <Select id="editMarket" selectedKey="{edit>/marketWeekday}">
+                    <core:Item id="wd1" key="1" text="{i18n>weekday1}" />
+                    <core:Item id="wd2" key="2" text="{i18n>weekday2}" />
+                    <core:Item id="wd3" key="3" text="{i18n>weekday3}" />
+                    <core:Item id="wd4" key="4" text="{i18n>weekday4}" />
+                    <core:Item id="wd5" key="5" text="{i18n>weekday5}" />
+                    <core:Item id="wd6" key="6" text="{i18n>weekday6}" />
+                    <core:Item id="wd0" key="0" text="{i18n>weekday0}" />
+                </Select>
+                <Label id="editDigestLbl" text="{i18n>settingDigestTime}" labelFor="editDigest" />
+                <TimePicker id="editDigest" value="{edit>/digestTime}" valueFormat="HH:mm:ss" displayFormat="HH:mm" />
+                <Label id="editQuietStartLbl" text="{i18n>settingQuietStart}" labelFor="editQuietStart" />
+                <TimePicker id="editQuietStart" value="{edit>/quietHoursStart}" valueFormat="HH:mm:ss" displayFormat="HH:mm" />
+                <Label id="editQuietEndLbl" text="{i18n>settingQuietEnd}" labelFor="editQuietEnd" />
+                <TimePicker id="editQuietEnd" value="{edit>/quietHoursEnd}" valueFormat="HH:mm:ss" displayFormat="HH:mm" />
+                <Label id="editTzLbl" text="{i18n>settingTimeZone}" labelFor="editTz" />
+                <Input id="editTz" value="{edit>/timeZone}" placeholder="Europe/Brussels" />
+                <Label id="editRecipientLbl" text="{i18n>settingRecipient}" labelFor="editRecipient" />
+                <Input id="editRecipient" value="{edit>/recipientEmail}" type="Email" />
+            </form:SimpleForm>
+        </content>
+        <beginButton>
+            <Button id="editSettingsSave" text="{i18n>confirm}" type="Emphasized" press=".onSaveSettings" />
+        </beginButton>
+        <endButton>
+            <Button id="editSettingsCancel" text="{i18n>cancel}" press=".onCloseDialog" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

@@ -1,0 +1,18 @@
+/* Bakery reorder assistant — small touches on top of sap_horizon_dark. Theme parameters only. */
+
+.bakLogo {
+    color: var(--sapBrandColor);
+}
+
+.bakItemIcon {
+    color: var(--sapContent_IconColor);
+}
+
+.bakLegend {
+    max-width: 60rem;
+    color: var(--sapContent_LabelColor);
+}
+
+.bakSubject {
+    font-weight: bold;
+}

@@ -20,4 +20,4 @@ Goal: four villagers, four apps, built in parallel without merge conflicts.
 6. After every change: `npm run typecheck`, `npm run lint:ui5`, `npm run build`, then check the app in the browser. Run Docker with `docker compose up --build --watch`.
 
 ## Tests
-`npm test` runs `srv/domain/*.test.ts` (node:test, no extra package): 71 tests, all passing. Covered: `water-health`, `priority`, `repair-status`, `pipe-overview` and `source-conflict` (one test file each). Not covered: `numbers.ts` (only indirectly), the service handlers (`water-supply-service.ts`) and all UI5 code; those are checked in the browser.
+`npm test` runs `srv/domain/*.test.ts` (node:test, no extra package): 125 tests, all passing. Covered: `water-health`, `priority`, `repair-status`, `pipe-overview` and `source-conflict` (one test file each), plus `food-reorder` and `food-notifier` (`food-decimal` and `food-calendar` indirectly). Not covered: `numbers.ts` (only indirectly), the service handlers (`water-supply-service.ts`) and all UI5 code; those are checked in the browser.
