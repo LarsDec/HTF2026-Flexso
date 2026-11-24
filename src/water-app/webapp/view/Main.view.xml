@@ -1,0 +1,72 @@
+<mvc:View
+    controllerName="water.pipes.controller.Main"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:f="sap.f"
+    displayBlock="true"
+    height="100%">
+    <f:DynamicPage id="page" busy="{view>/busy}">
+        <f:title>
+            <f:DynamicPageTitle id="pageTitle">
+                <f:heading>
+                    <Title id="pageTitleText" text="{i18n>appTitle}" level="H1" wrapping="true" />
+                </f:heading>
+                <f:expandedContent>
+                    <Label id="pageSubtitle" text="{i18n>pageSubtitle}" wrapping="true" />
+                </f:expandedContent>
+                <f:actions>
+                    <Button id="refreshButton" icon="sap-icon://refresh" tooltip="{i18n>refreshTooltip}" text="{i18n>refresh}" press=".onRefresh" />
+                </f:actions>
+            </f:DynamicPageTitle>
+        </f:title>
+
+        <f:content>
+            <VBox id="content" class="sapUiResponsiveContentPadding">
+                <!-- ============================ My morning ============================ -->
+                <Title id="morningTitle" text="{i18n>morningTitle}" level="H2" class="sapUiSmallMarginBottom" />
+                <MessageStrip id="morningEmpty" type="Success" showIcon="true" text="{i18n>morningNoPlan}"
+                    visible="{= ${view>/plan}.length === 0 &amp;&amp; !${view>/busy} }" class="sapUiMediumMarginBottom" />
+                <VBox id="planList" items="{ path: 'view>/plan', templateShareable: false }" class="sapUiMediumMarginBottom">
+                    <VBox id="planCard" class="waterPlanCard sapUiSmallMarginBottom">
+                        <HBox id="planHead" wrap="Wrap" alignItems="Center" justifyContent="SpaceBetween">
+                            <Title id="planPipe" text="{view>pipeID}" level="H3" wrapping="true" />
+                            <ObjectStatus id="planStatus"
+                                text="{ parts: ['view>healthStatus', 'i18n>statusFine', 'i18n>statusAttention', 'i18n>statusAlarm', 'i18n>statusUnknown'], formatter: '.formatter.statusText' }"
+                                state="{view>healthState}" icon="{view>healthIcon}" inverted="true" />
+                        </HBox>
+                        <Text id="planStatusReason" text="{view>statusReason}" wrapping="true" class="sapUiTinyMarginTop" />
+                        <Text id="planPriorityReason" text="{view>priorityReason}" wrapping="true" class="waterReason sapUiTinyMarginTop" />
+                    </VBox>
+                </VBox>
+
+                <!-- ============================ All pipes ============================ -->
+                <Title id="pipesTitle" text="{i18n>pipesTitle}" level="H2" class="sapUiSmallMarginBottom" />
+                <Table id="pipesTable" noDataText="{i18n>noData}" items="{ path: 'view>/pipes', templateShareable: false }">
+                    <columns>
+                        <Column id="pipeIDCol"><Text id="pipeIDHdr" text="{i18n>pipeID}" /></Column>
+                        <Column id="pipeStatusCol"><Text id="pipeStatusHdr" text="{i18n>pipeStatus}" /></Column>
+                        <Column id="pipeReasonCol" minScreenWidth="Tablet" demandPopin="true"><Text id="pipeReasonHdr" text="{i18n>pipeReason}" /></Column>
+                        <Column id="pipeAgeCol" hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text id="pipeAgeHdr" text="{i18n>pipeReadingAge}" /></Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem id="pipeRow">
+                            <cells>
+                                <ObjectIdentifier id="pipeIDCell" title="{view>pipeID}" />
+                                <VBox id="pipeStatusCell">
+                                    <ObjectStatus id="pipeStatusText"
+                                        text="{ parts: ['view>healthStatus', 'i18n>statusFine', 'i18n>statusAttention', 'i18n>statusAlarm', 'i18n>statusUnknown'], formatter: '.formatter.statusText' }"
+                                        state="{view>healthState}" icon="{view>healthIcon}" />
+                                    <ObjectStatus id="pipeRepairedText" text="{i18n>pipeRepaired}" state="Information" icon="sap-icon://wrench" visible="{view>repaired}" />
+                                    <ObjectStatus id="pipeConflictText" text="{i18n>warnSourceConflict}" state="Warning" icon="sap-icon://alert" visible="{view>sourceConflict}" />
+                                    <ObjectStatus id="pipeSuspiciousText" text="{i18n>warnSuspiciousRepair}" state="Warning" icon="sap-icon://alert" visible="{view>suspiciousRepair}" />
+                                </VBox>
+                                <Text id="pipeReasonCell" text="{view>statusReason}" wrapping="true" />
+                                <ObjectNumber id="pipeAgeCell" number="{view>readingAgeMinutes}" unit="{i18n>unitMinutes}" />
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </VBox>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>

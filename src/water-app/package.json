@@ -1,0 +1,9 @@
+{
+  "name": "water.pipes",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Water: which pipe needs the crew first (UI5 TypeScript app)",
+  "devDependencies": {
+    "ui5-tooling-transpile": "^3.13.1"
+  }
+}

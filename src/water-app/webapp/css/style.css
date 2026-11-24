@@ -1,0 +1,21 @@
+/* Water — small touches on top of the sap_horizon_dark theme; theme parameters only. */
+
+/* Give the DynamicPage a full-height parent, otherwise it collapses to the title bar. */
+html,
+body,
+#container,
+#container-uiarea {
+    height: 100%;
+}
+
+.waterReason {
+    color: var(--sapContent_LabelColor);
+}
+
+.waterPlanCard {
+    border: 1px solid var(--sapTile_BorderColor);
+    border-radius: 0.5rem;
+    background: var(--sapTile_Background);
+    padding: 1rem;
+    max-width: 100%;
+}
