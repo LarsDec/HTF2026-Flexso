@@ -13,7 +13,20 @@ service WaterSupplyService @(path: 'water-supply', impl: 'srv/water-supply-servi
     // 👋 EXAMPLE — a computed field. `virtual` = part of the API, but not a column in the database.
     //    CAP returns null for it until a handler fills it in: see addDaysSinceMaintenance in
     //    water-supply-service.ts. Shown as a column in src/oakhaven-app/webapp/view/Main.view.xml.
-    virtual null as daysSinceMaintenance : Integer
+    virtual null as daysSinceMaintenance : Integer,
+    // Status and repair priority, computed in srv/domain/* (see addHealthOverview in the .ts).
+    virtual null as healthStatus      : String(10),   // fine | attention | alarm | unknown
+    virtual null as statusReason      : String,
+    virtual null as readingAgeMinutes : Integer,
+    virtual null as healthState       : String(10),   // UI5 ValueState: Error | Warning | Success | None
+    virtual null as healthIcon        : String,       // sap-icon:// name
+    virtual null as priorityRank      : Integer,
+    virtual null as priorityReason    : String,
+    virtual null as inTodaysPlan      : Boolean,
+    virtual null as sourceConflict    : Boolean,
+    virtual null as lastRepairDate    : DateTime,
+    virtual null as repaired          : Boolean,
+    virtual null as suspiciousRepair  : Boolean
   };
 
   @readonly
