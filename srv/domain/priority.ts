@@ -5,8 +5,8 @@ import type { HealthStatus } from './water-health';
 
 /**
  * Order in which statuses are repaired first. Maren: severity always wins, an alarm comes before
- * "needs attention"; people only decide between equal levels. OPEN: where "unknown" belongs.
- * Change ONLY this constant to flip it.
+ * "needs attention"; people only decide between equal levels. Confirmed by Maren (v11): alarm,
+ * then "I don't know", then needs attention, then fine.
  */
 export const STATUS_ORDER: readonly HealthStatus[] = ['alarm', 'unknown', 'attention', 'fine'];
 

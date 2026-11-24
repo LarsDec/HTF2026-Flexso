@@ -20,6 +20,7 @@ Requirements for the water app (`src/water-app`, `srv/water-supply-service`, `sr
 | 8 | When a repair is already booked for a pipe, how should your morning list show that? | "Booked ahead? We don't really work like that. One crew, and each morning I decide where we go. What I do know: after a repair I note it myself, with which pipe, what was wrong, the date and who did it. From then on the pipe should show as repaired, until new readings say otherwise. How you show that on the list is up to you, you're the experts." |
 | 9 | Is there anything the tool must never do, something that would make you stop trusting it? | "Never tell me a pipe is fine when it doesn't actually know. If the reading is more than fifteen minutes old or a number is missing, I want to see "I don't know", not a reassuring green light. If I walk out in the morning trusting that and find a dry tap, I'm done with it." |
 | 10 | When you decide where the crew goes first, what counts more: how bad the pipe is (alarm or needs attention), or how many people depend on it? | "How bad it is, always. An alarm comes before a "needs attention", whoever is on the other end. People only decide it when two problems are at the same level." |
+| 11 | Where does an "I don't know" pipe go in your morning list compared to alarm and needs attention? | "Somewhere in the middle. The alarms come first, then the pipes I know nothing about, then the "needs attention" ones. If I don't know what a pipe is doing, someone has to go and look, and that can't wait a whole week." |
 
 ## Rules implemented
 
@@ -36,7 +37,8 @@ Requirements for the water app (`src/water-app`, `srv/water-supply-service`, `sr
 
 - Severity first (v10): an alarm always comes before "needs attention", whatever the number of people. Only at the same level the number of dependants decides: NORTH-BRANCH-02 (about 140 families, North Residential Area) goes first among equals.
 - SECONDARY-LOOP always comes last, even in alarm (backup ring, nobody depends on it).
-- Our assumption, not Maren's: "I don't know" is placed right after alarm and before needs attention (`STATUS_ORDER` in `srv/domain/priority.ts`), and a tie with no known family counts is broken alphabetically by pipe ID. Both are open.
+- Order of statuses (v11): alarm, then "I don't know", then needs attention, then fine (`STATUS_ORDER` in `srv/domain/priority.ts`).
+- Our assumption, not Maren's: a tie with no known family counts is broken alphabetically by pipe ID.
 - The morning list is capped at 2 repairs per day, one crew.
 - No family counts exist for SOUTH-BRANCH and BAKERY-BRANCH, so no numbers are invented. The reason is shown in words: BAKERY-BRANCH = bread for the whole village; SOUTH-BRANCH = animals, about half a day.
 
@@ -63,7 +65,6 @@ Requirements for the water app (`src/water-app`, `srv/water-supply-service`, `sr
 
 ## Open questions
 
-- Where "I don't know" belongs in the morning order is still open.
 - Family counts for the other pipes are unknown.
 - Which source is right in the conflict is for Ilse to answer.
 - Unknown when a pipe has no timestamp of its own: the newest sensor reading is used.
