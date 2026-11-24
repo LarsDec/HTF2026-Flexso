@@ -167,7 +167,7 @@
                         <Column id="pipeFlowCol" minScreenWidth="Tablet" demandPopin="true"><Text id="pipeFlowHdr" text="{i18n>flowLabel}" /></Column>
                         <Column id="pipePressureCol" minScreenWidth="Desktop" demandPopin="true"><Text id="pipePressureHdr" text="{i18n>pressureLabel}" /></Column>
                         <Column id="pipeRepairCol" minScreenWidth="Desktop" demandPopin="true"><Text id="pipeRepairHdr" text="{i18n>lastRepairLabel}" /></Column>
-                        <Column id="pipeActionCol" hAlign="End" width="13rem"><Text id="pipeActionHdr" text="{i18n>pipeAction}" /></Column>
+                        <Column id="pipeActionCol" hAlign="End"><Text id="pipeActionHdr" text="{i18n>pipeAction}" class="sapUiSmallMarginEnd" /></Column>
                     </columns>
                     <items>
                         <ColumnListItem id="pipeRow" type="Active" press=".onSelectRow"
@@ -195,7 +195,7 @@
                                     text="{ parts: ['i18n>pressureValue', 'i18n>valueNone', 'currentPressure'], formatter: '.formatter.pressureText' }" />
                                 <Text id="pipeLastRepairCell" wrapping="true"
                                     text="{ parts: ['i18n>lastRepairShort', 'i18n>lastRepairNone', { path: 'lastRepairDate', type: 'DateTime', formatOptions: { pattern: 'dd MMM yyyy', source: { pattern: &quot;yyyy-MM-dd'T'HH:mm:ss.SSSX&quot; } } }, 'lastRepairedBy', 'lastRepairIssue'], formatter: '.formatter.lastRepairShort' }" />
-                                <HBox id="pipeActionBox" wrap="NoWrap" justifyContent="End" alignItems="Center">
+                                <HBox id="pipeActionBox" wrap="Wrap">
                                     <Button id="repairHistoryButton" class="sapUiTinyMarginEnd" text="{i18n>repairHistory}" icon="sap-icon://history"
                                         tooltip="{ parts: ['i18n>repairHistoryTooltip', 'pipeID'], formatter: '.formatter.withPipe' }" press=".onRepairHistory" />
                                     <Button id="logRepairButton" text="{i18n>logRepair}" icon="sap-icon://wrench"

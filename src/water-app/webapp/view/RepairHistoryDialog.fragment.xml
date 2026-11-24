@@ -1,0 +1,36 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    core:require="{ DateTimeOffset: 'sap/ui/model/odata/type/DateTimeOffset' }">
+    <Dialog id="repairHistoryDialog" contentWidth="44rem" stretch="{device>/system/phone}" draggable="true"
+        title="{ parts: ['i18n>repairHistoryTitle', 'pipeID'], formatter: '.formatter.withPipe' }"
+        initialFocus="repairHistoryCloseButton" afterClose=".onHistoryClosed">
+        <content>
+            <Table id="repairHistoryTable" class="sapUiSizeCompact" noDataText="{i18n>repairHistoryEmpty}"
+                items="{ path: 'repairs', parameters: { $orderby: 'repairDate desc' }, templateShareable: false }">
+                <columns>
+                    <Column id="repairColDate" width="8rem"><Text id="repairColDateHdr" text="{i18n>repairColDate}" /></Column>
+                    <Column id="repairColBy" width="10rem"><Text id="repairColByHdr" text="{i18n>repairColBy}" /></Column>
+                    <Column id="repairColWhat"><Text id="repairColWhatHdr" text="{i18n>repairColWhat}" /></Column>
+                </columns>
+                <items>
+                    <ColumnListItem id="repairHistoryRow" type="Inactive">
+                        <cells>
+                            <Text id="repairDateCell" text="{ path: 'repairDate', type: 'DateTimeOffset', formatOptions: { pattern: 'dd MMM yyyy', UTC: true } }" />
+                            <Text id="repairByCell" text="{repairedBy}" wrapping="true" />
+                            <VBox id="repairWhatCell">
+                                <Text id="repairIssueCell" text="{issue}" wrapping="true" />
+                                <ObjectStatus id="repairFutureFlag" class="sapUiTinyMarginTop" text="{i18n>repairFlagFuture}" state="Warning" icon="sap-icon://alert" visible="{= ${futureDated} === true }" />
+                                <ObjectStatus id="repairSystemFlag" class="sapUiTinyMarginTop" text="{i18n>repairFlagSystem}" state="Warning" icon="sap-icon://alert" visible="{= ${bySystem} === true }" />
+                                <ObjectStatus id="repairUntrustedFlag" class="sapUiTinyMarginTop" text="{i18n>repairUntrusted}" icon="sap-icon://hide" visible="{= ${untrusted} === true }" />
+                            </VBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+        <endButton>
+            <Button id="repairHistoryCloseButton" text="{i18n>repairHistoryClose}" type="Emphasized" press=".onCloseHistory" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

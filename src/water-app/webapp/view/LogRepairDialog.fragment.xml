@@ -1,0 +1,32 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout.form">
+    <Dialog id="logRepairDialog" title="{i18n>logRepairTitle}" contentWidth="28rem" stretch="{device>/system/phone}" draggable="true"
+        busy="{repair>/busy}" initialFocus="repairIssueInput" afterClose=".onLogRepairClosed">
+        <content>
+            <l:SimpleForm id="logRepairForm" editable="true" layout="ResponsiveGridLayout">
+                <Label id="repairPipeLabel" text="{i18n>repairPipe}" labelFor="repairPipeInput" />
+                <Input id="repairPipeInput" value="{repair>/pipeID}" editable="false" />
+                <Label id="repairIssueLabel" text="{i18n>repairIssue}" labelFor="repairIssueInput" required="true" />
+                <TextArea id="repairIssueInput" value="{repair>/issue}" rows="3" maxLength="500"
+                    placeholder="{i18n>repairIssuePlaceholder}" valueLiveUpdate="true" liveChange=".onRepairChanged"
+                    valueState="{repair>/issueState}" valueStateText="{repair>/issueText}" />
+                <Label id="repairDateLabel" text="{i18n>repairDate}" labelFor="repairDateInput" required="true" />
+                <DatePicker id="repairDateInput" value="{repair>/date}" valueFormat="yyyy-MM-dd"
+                    maxDate="{repair>/maxDate}" change=".onRepairChanged"
+                    valueState="{repair>/dateState}" valueStateText="{repair>/dateText}" />
+                <Label id="repairByLabel" text="{i18n>repairBy}" labelFor="repairByInput" required="true" />
+                <Input id="repairByInput" value="{repair>/by}" valueLiveUpdate="true" liveChange=".onRepairChanged"
+                    valueState="{repair>/byState}" valueStateText="{repair>/byText}" />
+            </l:SimpleForm>
+        </content>
+        <beginButton>
+            <Button id="repairSaveButton" text="{i18n>repairSave}" type="Emphasized"
+                enabled="{= ${repair>/issue}.trim() !== '' &amp;&amp; ${repair>/date} !== '' &amp;&amp; ${repair>/by}.trim() !== '' }" press=".onSaveRepair" />
+        </beginButton>
+        <endButton>
+            <Button id="repairCancelButton" text="{i18n>repairCancel}" press=".onCancelRepair" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>
