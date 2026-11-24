@@ -3,7 +3,11 @@
  */
 import { toNumber, type NumericInput } from './numbers';
 
-/** Ilse: a sensor flow of more than double the pipe's normal flow is suspicious. */
+/**
+ * Our own team heuristic: a sensor flow above double the pipe's normal flow is suspicious.
+ * Ilse only gave "a sensor that suddenly measures more than double the normal flow" as an example;
+ * the threshold is not a rule from her.
+ */
 export const CONFLICT_FACTOR = 2;
 
 export function flagSourceConflict(pipeNominalFlow: NumericInput, sensorFlows: readonly NumericInput[]): boolean {
