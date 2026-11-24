@@ -1,0 +1,37 @@
+/* Council: small touches on top of the theme; own classes and theme parameters only. */
+
+/* Give the DynamicPage a full-height parent, otherwise it collapses to the title bar. */
+html,
+body,
+#container,
+#container-uiarea {
+    height: 100%;
+}
+
+.councilMuted {
+    color: var(--sapContent_LabelColor);
+}
+
+@page {
+    size: A4;
+    margin: 12mm;
+}
+
+@media print {
+    /* Let the page flow over several sheets instead of clipping it to one screen. */
+    html,
+    body,
+    #container,
+    #container-uiarea {
+        height: auto;
+        overflow: visible;
+    }
+
+    .councilNoPrint {
+        display: none;
+    }
+
+    .councilRow {
+        break-inside: avoid;
+    }
+}

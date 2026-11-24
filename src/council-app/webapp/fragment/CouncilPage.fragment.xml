@@ -1,0 +1,116 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    core:require="{ formatter: 'oakhaven/council/model/formatter', DateTimeOffset: 'sap/ui/model/odata/type/DateTimeOffset' }">
+    <VBox id="content" class="sapUiResponsiveContentPadding">
+
+        <!-- ======================= How Oakhaven is doing ======================= -->
+        <VBox id="summaryBox" binding="{/Summary('current')}" class="sapUiMediumMarginBottom">
+            <Title id="summaryTitle" text="{i18n>summaryTitle}" level="H2" class="sapUiSmallMarginBottom" />
+            <ObjectStatus id="summaryWater"
+                text="{ parts: ['i18n>summaryWater', 'pipesAlarm', 'pipesUnknown', 'pipesAttention', 'pipesFine', 'pipesTotal'], formatter: 'formatter.msg' }"
+                state="{= %{pipesAlarm} > 0 ? 'Error' : (%{pipesUnknown} + %{pipesAttention}) > 0 ? 'Warning' : 'Success' }"
+                icon="sap-icon://ti/droplet" />
+            <ObjectStatus id="summaryFood"
+                text="{ parts: ['i18n>summaryFood', 'itemsPanic', 'itemsNervous', 'itemsFine', 'itemsTotal'], formatter: 'formatter.msg' }"
+                state="{= %{itemsPanic} > 0 ? 'Error' : %{itemsNervous} > 0 ? 'Warning' : 'Success' }"
+                icon="sap-icon://nutrition-activity" />
+            <ObjectStatus id="summaryUntrusted" state="Error" icon="sap-icon://error" visible="{= %{untrustedCount} > 0 }"
+                text="{ parts: ['i18n>summaryUntrusted', 'untrustedCount'], formatter: 'formatter.msg' }" />
+        </VBox>
+
+        <!-- ======================= Where it hurts ======================= -->
+        <Title id="problemsTitle" text="{i18n>problemsTitle}" level="H2" />
+        <Text id="orderExplained" text="{i18n>orderExplained}" wrapping="true" class="councilMuted sapUiSmallMarginBottom" />
+        <Table id="problemsTable" class="sapUiMediumMarginBottom"
+            items="{ path: '/Problems', templateShareable: false, events: { dataReceived: '.onDataReceived' } }">
+            <noData>
+                <IllustratedMessage id="problemsEmpty" illustrationType="sapIllus-SuccessHighFive"
+                    title="{i18n>emptyTitle}" description="{i18n>emptyText}" />
+            </noData>
+            <columns>
+                <Column id="rankCol" width="3rem"><Text id="rankHdr" text="{i18n>colRank}" /></Column>
+                <Column id="problemCol"><Text id="problemHdr" text="{i18n>colProblem}" /></Column>
+                <Column id="seriousCol"><Text id="seriousHdr" text="{i18n>colSerious}" /></Column>
+                <Column id="peopleCol"><Text id="peopleHdr" text="{i18n>colPeople}" /></Column>
+                <Column id="tieCol"><Text id="tieHdr" text="{i18n>colTie}" /></Column>
+            </columns>
+            <items>
+                <ColumnListItem id="problemRow" class="councilRow" vAlign="Top">
+                    <cells>
+                        <ObjectNumber id="problemRank" number="{rank}" />
+                        <ObjectIdentifier id="problemSubject" title="{subject}"
+                            text="{ parts: ['area', 'places', 'view>/ready'], formatter: 'formatter.problemTitle' }" />
+                        <VBox id="problemSerious">
+                            <ObjectStatus id="problemLevel" state="{levelState}" icon="{levelIcon}"
+                                text="{ parts: ['level', 'view>/ready'], formatter: 'formatter.levelText' }" />
+                            <Text id="problemFacts" wrapping="true"
+                                text="{ parts: ['area', 'flowRate', 'nominalFlowRate', 'flowPercent', 'pressure', 'quantity', 'minimum', 'unit', 'view>/ready'], formatter: 'formatter.facts' }" />
+                            <Text id="problemMeaning" wrapping="true" class="councilMuted"
+                                text="{ parts: ['level', 'view>/ready'], formatter: 'formatter.meaning' }" />
+                            <ObjectStatus id="problemTrust" state="Error" icon="sap-icon://error" visible="{= !!%{trustNote} }"
+                                text="{ parts: ['trustNote', 'trustNoteSubject', 'view>/ready'], formatter: 'formatter.trustNote' }" />
+                        </VBox>
+                        <VBox id="problemPeople">
+                            <Text id="problemPeopleText" wrapping="true"
+                                text="{ parts: ['peopleKind', 'peopleCount', 'view>/ready'], formatter: 'formatter.people' }" />
+                            <Text id="problemPipeNote" wrapping="true" class="councilMuted" visible="{= !!%{pipeNote} }"
+                                text="{ parts: ['pipeNote', 'view>/ready'], formatter: 'formatter.pipeNote' }" />
+                        </VBox>
+                        <VBox id="problemTie" visible="{= !!%{tieVia} &amp;&amp; (!!%{tiedTo} || !!%{tiedToUntrusted}) }">
+                            <Text id="problemTieText" wrapping="true" visible="{= !!%{tiedTo} }"
+                                text="{ parts: ['area', 'tieVia', 'tiedTo', 'view>/ready'], formatter: 'formatter.tie' }" />
+                            <Text id="problemTieUntrusted" wrapping="true" visible="{= !!%{tiedToUntrusted} }"
+                                text="{ parts: ['tieVia', 'tiedToUntrusted', 'view>/ready'], formatter: 'formatter.tieUntrusted' }" />
+                            <Text id="problemTieNotKnown" wrapping="true" class="councilMuted"
+                                text="{ parts: ['tieVia', 'tiedTo', 'tiedToUntrusted', 'view>/ready'], formatter: 'formatter.tieNotKnown' }" />
+                        </VBox>
+                    </cells>
+                </ColumnListItem>
+            </items>
+        </Table>
+
+        <!-- ======================= Fine ======================= -->
+        <VBox id="fineBox" binding="{/Summary('current')}" class="sapUiMediumMarginBottom">
+            <Title id="fineTitle" text="{i18n>fineTitle}" level="H2" class="sapUiSmallMarginBottom" />
+            <ObjectStatus id="fineText" state="Success" icon="sap-icon://sys-enter-2"
+                text="{ parts: ['waterFineNames', 'foodFineNames', 'view>/ready'], formatter: 'formatter.fineLine' }" />
+        </VBox>
+
+        <!-- ======================= Not to be trusted ======================= -->
+        <Title id="untrustedTitle" text="{i18n>untrustedTitle}" level="H2" class="sapUiSmallMarginBottom" />
+        <Table id="untrustedTable" noDataText="{i18n>untrustedNone}" class="sapUiMediumMarginBottom"
+            items="{ path: '/UntrustedLines', templateShareable: false, events: { dataReceived: '.onDataReceived' } }">
+            <columns>
+                <Column id="lineCol"><Text id="lineHdr" text="{i18n>colLine}" /></Column>
+                <Column id="statusCol"><Text id="statusHdr" text="{i18n>colStatus}" /></Column>
+                <Column id="valueCol"><Text id="valueHdr" text="{i18n>colValue}" /></Column>
+                <Column id="whyCol"><Text id="whyHdr" text="{i18n>colWhy}" /></Column>
+                <Column id="effectCol"><Text id="effectHdr" text="{i18n>colEffect}" /></Column>
+            </columns>
+            <items>
+                <ColumnListItem id="untrustedRow" class="councilRow" vAlign="Top">
+                    <cells>
+                        <Text id="untrustedLine" wrapping="true"
+                            text="{ parts: ['lineKind', 'subject', 'parentSubject', 'view>/ready'], formatter: 'formatter.lineText' }" />
+                        <ObjectStatus id="untrustedStatus" state="Error" icon="sap-icon://error"
+                            text="{ parts: ['view>/ready'], formatter: 'formatter.notTrusted' }" />
+                        <Text id="untrustedValue" wrapping="true"
+                            text="{ parts: ['lineKind', 'recordedValue', 'recordedUnit', 'comparedTo', 'view>/ready'], formatter: 'formatter.valueText' }" />
+                        <VBox id="untrustedWhy">
+                            <Text id="untrustedReason" text="{reason}" wrapping="true" visible="{= !!%{reason} }" />
+                            <Text id="untrustedMark" wrapping="true" class="councilMuted"
+                                text="{ parts: ['source', 'markedBy', { path: 'markedAt', type: 'DateTimeOffset', constraints: { precision: 7 }, formatOptions: { style: 'medium' } }, 'view>/ready'], formatter: 'formatter.markText' }" />
+                        </VBox>
+                        <Text id="untrustedEffect" wrapping="true"
+                            text="{ parts: ['effect', 'view>/ready'], formatter: 'formatter.effectText' }" />
+                    </cells>
+                </ColumnListItem>
+            </items>
+        </Table>
+
+        <!-- ======================= What this page cannot tell ======================= -->
+        <Title id="unknownsTitle" text="{i18n>unknownsTitle}" level="H3" class="councilMuted" />
+        <Text id="unknownsText" text="{i18n>unknownsText}" wrapping="true" class="councilMuted" />
+    </VBox>
+</core:FragmentDefinition>
