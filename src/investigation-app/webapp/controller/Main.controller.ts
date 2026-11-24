@@ -378,21 +378,49 @@ export default class Main extends Controller {
   }
 
   public onPrintCouncil(): void {
-    const dialogDom = this.councilDialog?.getDomRef();
-    if (!dialogDom) {
-      window.print();
-      return;
-    }
+    const councilModel = this.getView()?.getModel("council") as JSONModel | undefined;
+    const councilData = councilModel?.getData() as {
+      sentence?: string;
+      undatedText?: string;
+      groupLabel?: string;
+      printedOn?: string;
+      buckets?: { label: string; count: number; percent: number }[];
+      lines?: { label: string; reason: string; changed: string; changedBy: string; markedBy: string }[];
+    } | undefined;
 
-    const printWindow = window.open("", "_blank", "width=900,height=700");
+    const title = (this.getView()?.getModel("i18n") as ResourceModel | undefined)
+      ?.getResourceBundle()
+      ?.getText("councilTitle") ?? "For the council: lines marked as not to be trusted";
+
+    const printWindow = window.open("", "_blank");
     if (!printWindow) {
       window.print();
       return;
     }
 
-    const title = (this.getView()?.getModel("i18n") as ResourceModel | undefined)
-      ?.getResourceBundle()
-      ?.getText("councilTitle") ?? "Council Report";
+    const bucketsRows = (councilData?.buckets ?? []).map((b) => `
+      <tr>
+        <td>${b.label}</td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div style="flex: 1; max-width: 200px; height: 14px; background: #eee; border-radius: 3px; overflow: hidden;">
+              <div style="width: ${b.percent}%; height: 100%; background: #bb0000;"></div>
+            </div>
+            <strong>${b.count}</strong>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+
+    const linesRows = (councilData?.lines ?? []).map((line) => `
+      <tr>
+        <td style="font-weight: 600;">${line.label}</td>
+        <td>${line.reason}</td>
+        <td>${line.changed}</td>
+        <td>${line.changedBy}</td>
+        <td>${line.markedBy}</td>
+      </tr>
+    `).join("");
 
     printWindow.document.write(`<!DOCTYPE html>
 <html>
@@ -400,22 +428,53 @@ export default class Main extends Controller {
   <meta charset="utf-8">
   <title>${title}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 2rem; color: #1a1a1a; }
-    h2, h3 { color: #0b2545; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; }
-    p { line-height: 1.5; font-size: 1.05rem; }
-    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
-    th, td { border: 1px solid #ccc; padding: 0.6rem 0.8rem; text-align: left; }
-    th { background: #f0f4f8; font-weight: 600; color: #333; }
-    .muted { color: #666; font-size: 0.85rem; }
-    .bar { display: inline-block; height: 12px; background: #d32f2f; border-radius: 2px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 3rem; color: #111; background: #fff; }
+    h1 { font-size: 1.5rem; color: #0b2545; border-bottom: 2px solid #0b2545; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+    h2 { font-size: 1.2rem; color: #222; margin-top: 2rem; border-bottom: 1px solid #ccc; padding-bottom: 0.3rem; }
+    p.summary { font-size: 1.1rem; line-height: 1.6; background: #f4f6f8; padding: 1rem; border-left: 4px solid #0b2545; border-radius: 3px; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+    th, td { border: 1px solid #ddd; padding: 0.65rem 0.8rem; text-align: left; vertical-align: top; }
+    th { background: #eaeff5; font-weight: 600; color: #333; }
+    .muted { color: #666; font-size: 0.85rem; margin-top: 1.5rem; }
     @media print {
-      body { margin: 1cm; }
+      body { margin: 1.5cm; }
     }
   </style>
 </head>
 <body>
-  <h2>${title}</h2>
-  ${dialogDom.querySelector(".sapMDialogSection")?.innerHTML ?? dialogDom.innerHTML}
+  <h1>${title}</h1>
+  <p class="summary">${councilData?.sentence ?? ""}</p>
+  ${councilData?.undatedText ? `<p class="muted">${councilData.undatedText}</p>` : ""}
+
+  ${(councilData?.buckets?.length ?? 0) > 0 ? `
+    <h2>Timeline of the changes (${councilData?.groupLabel ?? ""})</h2>
+    <table>
+      <thead>
+        <tr><th style="width: 250px;">When (UTC)</th><th>Lines changed</th></tr>
+      </thead>
+      <tbody>
+        ${bucketsRows}
+      </tbody>
+    </table>
+  ` : ""}
+
+  <h2>Marked lines</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 20%;">Line</th>
+        <th style="width: 40%;">Reason in plain words</th>
+        <th style="width: 15%;">Last changed (UTC)</th>
+        <th style="width: 12%;">Changed by</th>
+        <th style="width: 13%;">Marked by</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${linesRows}
+    </tbody>
+  </table>
+
+  <p class="muted">${councilData?.printedOn ?? ""}</p>
 </body>
 </html>`);
 
@@ -423,8 +482,7 @@ export default class Main extends Controller {
     printWindow.focus();
     setTimeout(() => {
       printWindow.print();
-      printWindow.close();
-    }, 350);
+    }, 250);
   }
 
   public onCloseCouncil(): void {
