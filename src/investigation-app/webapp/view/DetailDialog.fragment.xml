@@ -1,0 +1,65 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout">
+    <Dialog id="detailDialog" title="{i18n>detailTitle}" contentWidth="52rem" draggable="true" resizable="true"
+        stretch="{device>/system/phone}" afterClose=".onDetailClosed" class="invDetailDialog">
+        <content>
+            <VBox id="detailForm" class="sapUiMediumMargin">
+                <!-- Header Card: Finding Title, Record Info, and Current Trust State -->
+                <HBox id="detailHeaderRow" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap" class="sapUiSmallMarginBottom">
+                    <VBox id="detailHeaderTitleBox">
+                        <Title id="detailLineTitle" text="{detail>/label}" level="H2" class="sapUiTinyMarginBottom" />
+                        <Text id="detailRecordText" text="{detail>/record}" class="invMuted" />
+                    </VBox>
+                    <ObjectStatus id="detailMarkStatus" inverted="true" text="{detail>/statusText}" icon="{detail>/statusIcon}"
+                        state="{detail>/statusState}" class="sapUiTinyMarginTop" />
+                </HBox>
+
+                <!-- Full Reason Panel for Calm, Complete Reading -->
+                <VBox id="detailReasonSection" class="sapUiSmallMarginBottom">
+                    <Label id="detailReasonLabel" text="{i18n>detailReason}" design="Bold" class="sapUiTinyMarginBottom" />
+                    <Text id="detailReasonText" text="{detail>/reason}" class="invReasonParagraph sapUiSmallMarginBottom" wrapping="true" />
+                </VBox>
+
+                <!-- Audit and Evidence Grid -->
+                <l:Grid id="detailAuditGrid" defaultSpan="XL6 L6 M6 S12" class="sapUiSmallMarginTop">
+                    <!-- Column 1: Record modification timeline -->
+                    <VBox id="detailAuditCol1" class="invAuditBox">
+                        <Title id="detailAuditTitle" text="{i18n>detailChanged}" level="H4" class="sapUiTinyMarginBottom" />
+                        <HBox id="detailChangedUtcBox" class="sapUiTinyMarginBottom">
+                            <Text id="detailChangedUtcText" text="{detail>/changedUtc}" class="sapUiTinyMarginEnd" />
+                            <Text id="detailChangedUtcHint" text="{i18n>detailChangedUtc}" class="invMuted" />
+                        </HBox>
+                        <HBox id="detailChangedLocalBox" class="sapUiTinyMarginBottom" visible="{= !!${detail>/changedLocal} }">
+                            <Text id="detailChangedLocalText" text="{detail>/changedLocal}" class="sapUiTinyMarginEnd" />
+                            <Text id="detailChangedLocalHint" text="{detail>/localHint}" class="invMuted" />
+                        </HBox>
+                        <HBox id="detailChangedByBox" class="sapUiTinyMarginTop" alignItems="Center">
+                            <Label id="detailChangedByLabel" text="{i18n>detailChangedBy}:" class="sapUiTinyMarginEnd" />
+                            <Text id="detailChangedByText" text="{detail>/changedBy}" />
+                        </HBox>
+                    </VBox>
+
+                    <!-- Column 2: Investigation & Trust Assessment -->
+                    <VBox id="detailAuditCol2" class="invAuditBox">
+                        <Title id="detailAssessmentTitle" text="{i18n>detailMark}" level="H4" class="sapUiTinyMarginBottom" />
+                        <VBox id="detailMarkedContent" visible="{detail>/marked}">
+                            <Text id="detailMarkedByText" text="{detail>/markedBy}" class="sapUiTinyMarginBottom" />
+                            <Text id="detailMarkedOnText" text="{detail>/markedOn}" class="invMuted sapUiTinyMarginBottom" />
+                            <Text id="detailMarkReasonText" text="{detail>/markReason}" class="sapUiTinyMarginTop" />
+                        </VBox>
+                        <Text id="detailNotMarkedText" text="{i18n>detailNotMarked}" visible="{= !${detail>/marked} }" class="invMuted" />
+                    </VBox>
+                </l:Grid>
+            </VBox>
+        </content>
+        <buttons>
+            <Button id="detailMarkButton" text="{i18n>markButton}" type="Emphasized" icon="sap-icon://hide"
+                visible="{= !${detail>/marked} }" press=".onDetailMark" />
+            <Button id="detailClearButton" text="{i18n>clearButton}" icon="sap-icon://undo"
+                visible="{detail>/marked}" press=".onDetailClear" />
+            <Button id="detailCloseButton" text="{i18n>detailClose}" press=".onDetailClose" />
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>

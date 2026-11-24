@@ -1,0 +1,9 @@
+{
+  "name": "oakhaven.investigation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Oakhaven investigation: suspicious lines and the marks not to be trusted",
+  "devDependencies": {
+    "ui5-tooling-transpile": "^3.13.1"
+  }
+}

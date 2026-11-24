@@ -1,0 +1,70 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+    <Dialog id="councilDialog" title="{i18n>councilTitle}" contentWidth="60rem" draggable="true"
+        class="invCouncilDialog" afterClose=".onCouncilClosed">
+        <content>
+            <VBox id="councilBody" class="sapUiSmallMargin">
+                <Text id="councilSentence" text="{council>/sentence}" class="sapUiSmallMarginBottom" />
+                <Text id="councilUndated" text="{council>/undatedText}" visible="{= !!${council>/undatedText} }"
+                    class="invMuted sapUiSmallMarginBottom" />
+                <Table id="councilTimeline" visible="{= ${council>/buckets}.length > 0 }" class="sapUiSmallMarginBottom"
+                    items="{council>/buckets}">
+                    <headerToolbar>
+                        <Toolbar id="councilTimelineToolbar">
+                            <Title id="councilTimelineTitle" text="{i18n>councilTimelineTitle}" level="H3" />
+                            <ToolbarSpacer id="councilTimelineSpacer" />
+                            <Text id="councilGroupText" text="{council>/groupLabel}" class="invMuted" />
+                        </Toolbar>
+                    </headerToolbar>
+                    <columns>
+                        <Column id="councilColWhen" width="14rem"><Text id="councilColWhenText" text="{i18n>councilColWhen}" /></Column>
+                        <Column id="councilColCount"><Text id="councilColCountText" text="{i18n>councilColCount}" /></Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem id="councilBucketItem">
+                            <cells>
+                                <Text id="councilBucketWhen" text="{council>label}" />
+                                <ProgressIndicator id="councilBucketBar" class="invBar" percentValue="{council>percent}"
+                                    displayValue="{council>count}" state="Error" />
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+                <Table id="councilLines" visible="{= ${council>/lines}.length > 0 }" items="{council>/lines}">
+                    <headerToolbar>
+                        <Toolbar id="councilLinesToolbar">
+                            <Title id="councilLinesTitle" text="{i18n>councilLinesTitle}" level="H3" />
+                        </Toolbar>
+                    </headerToolbar>
+                    <columns>
+                        <Column id="councilColLine"><Text id="councilColLineText" text="{i18n>councilColLine}" /></Column>
+                        <Column id="councilColReason" width="40%"><Text id="councilColReasonText" text="{i18n>councilColReason}" /></Column>
+                        <Column id="councilColChanged"><Text id="councilColChangedText" text="{i18n>councilColChanged}" /></Column>
+                        <Column id="councilColChangedBy"><Text id="councilColChangedByText" text="{i18n>councilColChangedBy}" /></Column>
+                        <Column id="councilColMarked"><Text id="councilColMarkedText" text="{i18n>councilColMarked}" /></Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem id="councilLineItem" vAlign="Top">
+                            <cells>
+                                <Text id="councilLineLabel" text="{council>label}" />
+                                <Text id="councilLineReason" text="{council>reason}" />
+                                <Text id="councilLineChanged" text="{council>changed}" />
+                                <Text id="councilLineChangedBy" text="{council>changedBy}" />
+                                <Text id="councilLineMarkedBy" text="{council>markedBy}" />
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+                <Text id="councilPrintedText" text="{council>/printedOn}" class="invMuted sapUiSmallMarginTop" />
+            </VBox>
+        </content>
+        <beginButton>
+            <Button id="councilPrintButton" icon="sap-icon://print" text="{i18n>councilPrint}" type="Emphasized"
+                tooltip="{i18n>councilPrintTooltip}" enabled="{= ${council>/lines}.length > 0 }" press=".onPrintCouncil" />
+        </beginButton>
+        <endButton>
+            <Button id="councilCloseButton" text="{i18n>councilClose}" press=".onCloseCouncil" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

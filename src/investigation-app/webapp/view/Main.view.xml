@@ -1,0 +1,142 @@
+<mvc:View
+    controllerName="oakhaven.investigation.controller.Main"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:f="sap.f"
+    xmlns:core="sap.ui.core"
+    core:require="{ DateTimeOffset: 'sap/ui/model/odata/type/DateTimeOffset' }"
+    displayBlock="true"
+    height="100%">
+    <f:DynamicPage id="page" toggleHeaderOnTitleClick="true">
+        <f:title>
+            <f:DynamicPageTitle id="pageTitle">
+                <f:heading>
+                    <HBox id="pageHeading" alignItems="Center">
+                        <core:Icon id="pageLogo" src="sap-icon://search" size="1.75rem" class="invLogo sapUiSmallMarginEnd" />
+                        <Title id="pageTitleText" text="{i18n>appTitle}" level="H1" wrapping="false" />
+                    </HBox>
+                </f:heading>
+                <f:expandedContent>
+                    <Label id="pageSubtitle" text="{i18n>pageSubtitle}" />
+                </f:expandedContent>
+                <f:snappedContent>
+                    <Label id="pageSubtitleSnapped" text="{i18n>pageSubtitle}" />
+                </f:snappedContent>
+                <f:actions>
+                    <Button id="councilButton" icon="sap-icon://print" text="{i18n>councilButton}"
+                        tooltip="{i18n>councilTooltip}" press=".onCouncil" />
+                    <Button id="refreshButton" icon="sap-icon://refresh" text="{i18n>refresh}"
+                        tooltip="{i18n>refreshTooltip}" press=".onRefresh" />
+                </f:actions>
+            </f:DynamicPageTitle>
+        </f:title>
+
+        <f:header>
+            <f:DynamicPageHeader id="pageHeader">
+                <VBox id="headerContent">
+                    <Text id="pageIntro" text="{i18n>pageIntro}" class="invIntro sapUiSmallMarginBottom" />
+                    <FlexBox id="counters" wrap="Wrap" class="invCounters">
+                        <VBox id="counterSuspiciousBox">
+                            <Label id="counterSuspiciousLabel" text="{i18n>counterSuspicious}" />
+                            <NumericContent id="counterSuspicious" value="{view>/counts/suspicious}" withMargin="false" />
+                        </VBox>
+                        <VBox id="counterImpossibleBox">
+                            <Label id="counterImpossibleLabel" text="{i18n>counterImpossible}" />
+                            <NumericContent id="counterImpossible" value="{view>/counts/impossible}" withMargin="false" valueColor="Error" />
+                        </VBox>
+                        <VBox id="counterOddBox">
+                            <Label id="counterOddLabel" text="{i18n>counterOdd}" />
+                            <NumericContent id="counterOdd" value="{view>/counts/odd}" withMargin="false" valueColor="Critical" />
+                        </VBox>
+                        <VBox id="counterUntrustedBox">
+                            <Label id="counterUntrustedLabel" text="{i18n>counterUntrusted}" />
+                            <NumericContent id="counterUntrusted" value="{view>/counts/untrusted}" withMargin="false" valueColor="Error" />
+                        </VBox>
+                        <VBox id="counterReviewBox">
+                            <Label id="counterReviewLabel" text="{i18n>counterReview}" />
+                            <NumericContent id="counterReview" value="{view>/counts/review}" withMargin="false" />
+                        </VBox>
+                    </FlexBox>
+                </VBox>
+            </f:DynamicPageHeader>
+        </f:header>
+
+        <f:content>
+            <Table
+                id="findingsTable"
+                class="sapUiResponsiveContentPadding"
+                busyIndicatorDelay="0"
+                updateFinished=".onUpdateFinished"
+                ariaLabelledBy="findingsTitle"
+                items="{ path: '/Findings', templateShareable: false, events: { dataReceived: '.onDataReceived' } }">
+                <headerToolbar>
+                    <OverflowToolbar id="findingsToolbar">
+                        <Title id="findingsTitle" text="{i18n>findingsTitle}" level="H2" />
+                        <ToolbarSpacer id="findingsSpacer" />
+                        <SegmentedButton id="filterButtons" selectedKey="{view>/filter}" selectionChange=".onFilter"
+                            tooltip="{i18n>filterTooltip}">
+                            <items>
+                                <SegmentedButtonItem id="filterAll" key="all"
+                                    text="{parts: ['i18n>filterAll', 'view>/counts/suspicious'], formatter: '.formatter.fill'}" />
+                                <SegmentedButtonItem id="filterReview" key="review"
+                                    text="{parts: ['i18n>filterReview', 'view>/counts/review'], formatter: '.formatter.fill'}" />
+                                <SegmentedButtonItem id="filterMarked" key="marked"
+                                    text="{parts: ['i18n>filterMarked', 'view>/counts/untrusted'], formatter: '.formatter.fill'}" />
+                            </items>
+                        </SegmentedButton>
+                    </OverflowToolbar>
+                </headerToolbar>
+                <noData>
+                    <IllustratedMessage id="noFindings" illustrationType="sapIllus-NoData"
+                        title="{view>/emptyTitle}" description="{view>/emptyDescription}" />
+                </noData>
+                <columns>
+                    <Column id="colSeverity" width="9rem"><Text id="colSeverityText" text="{i18n>colSeverity}" /></Column>
+                    <Column id="colLine" minScreenWidth="Tablet" demandPopin="true"><Text id="colLineText" text="{i18n>colLine}" /></Column>
+                    <Column id="colReason" minScreenWidth="Desktop" demandPopin="true"><Text id="colReasonText" text="{i18n>colReason}" /></Column>
+                    <Column id="colChanged" minScreenWidth="Desktop" demandPopin="true"><Text id="colChangedText" text="{i18n>colChanged}" /></Column>
+                    <Column id="colChangedBy" minScreenWidth="Desktop" demandPopin="true"><Text id="colChangedByText" text="{i18n>colChangedBy}" /></Column>
+                    <Column id="colStatus"><Text id="colStatusText" text="{i18n>colStatus}" /></Column>
+                    <Column id="colActions" hAlign="End"><Text id="colActionsText" text="{i18n>colActions}" /></Column>
+                </columns>
+                <items>
+                    <ColumnListItem id="findingItem" vAlign="Top" type="Active" press=".onRowPress" tooltip="{i18n>rowTooltip}">
+                        <cells>
+                            <ObjectStatus id="severityStatus"
+                                text="{parts: [{path: 'severity', targetType: 'any'}, 'i18n>severityRule', 'i18n>severityRules'], formatter: '.formatter.severityText'}"
+                                icon="{path: 'severity', targetType: 'any', formatter: '.formatter.severityIcon'}"
+                                state="{path: 'severity', targetType: 'any', formatter: '.formatter.severityState'}" />
+                            <Text id="lineText" text="{label}" maxLines="2" tooltip="{label}" />
+                            <Text id="reasonText" text="{reason}" maxLines="2" tooltip="{reason}" />
+                            <HBox id="changedBox" wrap="Wrap">
+                                <Text id="changedText" class="sapUiTinyMarginEnd" text="{
+                                    path: 'changedAt',
+                                    type: 'DateTimeOffset',
+                                    constraints: { precision: 7 },
+                                    formatOptions: { style: 'medium', UTC: true }
+                                }" />
+                                <Text id="changedUtc" text="{i18n>utcSuffix}" class="invMuted" visible="{path: 'changedAt', targetType: 'any', formatter: '.formatter.isFilled'}" />
+                            </HBox>
+                            <Text id="changedByText" text="{parts: ['changedBy', 'i18n>noName'], formatter: '.formatter.orElse'}" />
+                            <VBox id="statusBox">
+                                <ObjectStatus id="trustStatus"
+                                    text="{parts: [{path: 'untrusted', targetType: 'any'}, 'i18n>statusUntrusted', 'i18n>statusToReview'], formatter: '.formatter.pick'}"
+                                    icon="{path: 'untrusted', targetType: 'any', formatter: '.formatter.trustIcon'}"
+                                    state="{path: 'untrusted', targetType: 'any', formatter: '.formatter.trustState'}"
+                                    tooltip="{parts: [{path: 'untrusted', targetType: 'any'}, 'i18n>statusUntrustedTooltip', 'i18n>statusToReviewTooltip'], formatter: '.formatter.pick'}" />
+                                <Text id="untrustedByText" visible="{= ${untrusted} }" class="invMuted"
+                                    text="{parts: ['i18n>untrustedBy', 'untrustedBy'], formatter: '.formatter.fill'}" />
+                            </VBox>
+                            <HBox id="actionsBox" justifyContent="End">
+                                <Button id="markButton" text="{i18n>markButton}" tooltip="{parts: ['i18n>markTooltip', 'label'], formatter: '.formatter.fill'}"
+                                    type="Emphasized" visible="{= !${untrusted} }" press=".onMark" />
+                                <Button id="clearButton" text="{i18n>clearButton}" tooltip="{parts: ['i18n>clearTooltip', 'label'], formatter: '.formatter.fill'}"
+                                    visible="{= ${untrusted} }" press=".onClear" />
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>

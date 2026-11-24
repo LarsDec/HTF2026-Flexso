@@ -1,0 +1,26 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+    <Dialog id="markDialog" title="{i18n>markDialogTitle}" contentWidth="30rem" draggable="true"
+        busy="{mark>/busy}" afterClose=".onMarkClosed">
+        <content>
+            <VBox id="markForm" class="sapUiSmallMargin">
+                <Label id="markLineLabel" text="{i18n>markDialogLine}" labelFor="markLineText" />
+                <Text id="markLineText" text="{mark>/label}" class="sapUiSmallMarginBottom" />
+                <Label id="markReasonLabel" text="{i18n>markReason}" labelFor="markReasonInput" required="true" />
+                <TextArea id="markReasonInput" value="{mark>/reason}" rows="5" width="100%" maxLength="500"
+                    placeholder="{i18n>markReasonPlaceholder}" valueLiveUpdate="true" class="sapUiSmallMarginBottom" />
+                <Label id="markByLabel" text="{i18n>markBy}" labelFor="markByInput" required="true" />
+                <Input id="markByInput" value="{mark>/by}" maxLength="100"
+                    placeholder="{i18n>markByPlaceholder}" valueLiveUpdate="true" submit=".onSaveMark" />
+            </VBox>
+        </content>
+        <beginButton>
+            <Button id="markSaveButton" text="{i18n>markSave}" type="Emphasized"
+                enabled="{= ${mark>/reason}.trim() !== '' &amp;&amp; ${mark>/by}.trim() !== '' }" press=".onSaveMark" />
+        </beginButton>
+        <endButton>
+            <Button id="markCancelButton" text="{i18n>markCancel}" press=".onCancelMark" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

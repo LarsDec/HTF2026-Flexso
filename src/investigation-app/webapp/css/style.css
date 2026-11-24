@@ -1,0 +1,77 @@
+/* Investigation: small touches on top of sap_horizon_dark, theme parameters only. */
+
+.invLogo {
+    color: var(--sapBrandColor);
+}
+
+.invIntro {
+    max-width: 48rem;
+}
+
+.invCounters {
+    gap: 2rem;
+}
+
+.invMuted {
+    color: var(--sapContent_LabelColor);
+}
+
+.invBar {
+    min-width: 8rem;
+}
+
+.invReasonParagraph {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin: 0;
+    padding: 1rem 1.25rem;
+    background: var(--sapTile_Background);
+    border-left: 4px solid var(--sapErrorBorderColor);
+    border-radius: 0.25rem;
+}
+
+.invAuditBox {
+    padding: 1rem;
+    background: var(--sapGroup_ContentBackground);
+    border-radius: 0.25rem;
+    height: 100%;
+}
+
+/* Printing the council view: only the dialog, flat and without scrolling. Paper is light, so the colours are too. */
+@media print {
+    body > *:not(#sap-ui-static) {
+        display: none !important;
+    }
+
+    #sap-ui-blocklayer-popup,
+    .invNoPrint {
+        display: none !important;
+    }
+
+    .invCouncilDialog.sapMDialog {
+        position: static !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        max-height: none !important;
+        box-shadow: none !important;
+        border: 0 !important;
+        background: white !important;
+        color: black !important;
+    }
+
+    .invCouncilDialog .sapMDialogSection,
+    .invCouncilDialog .sapMDialogScroll {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        background: white !important;
+    }
+
+    .invCouncilDialog .sapMText,
+    .invCouncilDialog .sapMTitle,
+    .invCouncilDialog .sapMLabel,
+    .invCouncilDialog .sapMListTblCell {
+        color: black !important;
+    }
+}
