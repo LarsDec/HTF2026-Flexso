@@ -18,7 +18,7 @@ Updated 2026-11-24. Data facts checked against `db/data/*.csv`. Conventions: see
 | Maren Holt | water | `water-app` | 2 of 15 |
 | Tobin Reyes | food / bakery | `food-app` | 6 of 15 |
 | Rowan Ashby | village council | `council-app` | 15 of 15 |
-| Ilse Vermeer | librarian / investigation | `investigation-app` | 5 of 15 |
+| Ilse Vermeer | librarian / investigation | `investigation-app` | 4 of 15 |
 
 ---
 

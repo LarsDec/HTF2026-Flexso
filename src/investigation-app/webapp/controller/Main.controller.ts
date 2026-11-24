@@ -251,6 +251,10 @@ export default class Main extends Controller {
     const none = await this.text("noName");
     const kind = await this.text(`entity${finding.entityName}`);
     const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const ruleList = (finding.rules ?? "").split(",");
+    const isQuietHours = ruleList.includes("quietHours");
+    const isConflict = ruleList.includes("impossibleFlow");
+
     (view.getModel("detail") as JSONModel).setData({
       label: finding.label,
       reason: finding.reason,
@@ -259,6 +263,8 @@ export default class Main extends Controller {
       changedLocal: formatter.localTime(finding.changedAt),
       localHint: finding.changedAt ? await this.text("detailChangedLocal", [zone]) : "",
       changedBy: formatter.orElse(finding.changedBy, none),
+      isQuietHours,
+      isConflict,
       marked,
       statusText: await this.text(marked ? "statusUntrusted" : "statusToReview"),
       statusIcon: formatter.trustIcon(marked),

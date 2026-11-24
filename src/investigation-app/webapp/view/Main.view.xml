@@ -102,10 +102,18 @@
                 <items>
                     <ColumnListItem id="findingItem" vAlign="Top" type="Active" press=".onRowPress" tooltip="{i18n>rowTooltip}">
                         <cells>
-                            <ObjectStatus id="severityStatus"
-                                text="{parts: [{path: 'severity', targetType: 'any'}, 'i18n>severityRule', 'i18n>severityRules'], formatter: '.formatter.severityText'}"
-                                icon="{path: 'severity', targetType: 'any', formatter: '.formatter.severityIcon'}"
-                                state="{path: 'severity', targetType: 'any', formatter: '.formatter.severityState'}" />
+                            <VBox id="severityBox">
+                                <ObjectStatus id="severityStatus"
+                                    text="{parts: [{path: 'severity', targetType: 'any'}, 'i18n>severityRule', 'i18n>severityRules'], formatter: '.formatter.severityText'}"
+                                    icon="{path: 'severity', targetType: 'any', formatter: '.formatter.severityIcon'}"
+                                    state="{path: 'severity', targetType: 'any', formatter: '.formatter.severityState'}" />
+                                <HBox id="rowBadges" wrap="Wrap" class="sapUiTinyMarginTop">
+                                    <ObjectStatus id="badgeQuietHours" text="{i18n>badgeQuietHours}" state="Error" icon="sap-icon://bed"
+                                        visible="{parts: ['rules', 'quietHours'], formatter: '.formatter.hasRule'}" class="sapUiTinyMarginEnd" />
+                                    <ObjectStatus id="badgeConflict" text="{i18n>badgeConflict}" state="Warning" icon="sap-icon://alert"
+                                        visible="{parts: ['rules', 'impossibleFlow'], formatter: '.formatter.hasRule'}" />
+                                </HBox>
+                            </VBox>
                             <Text id="lineText" text="{label}" maxLines="2" tooltip="{label}" />
                             <Text id="reasonText" text="{reason}" maxLines="2" tooltip="{reason}" />
                             <HBox id="changedBox" wrap="Wrap">

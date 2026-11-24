@@ -167,7 +167,7 @@
                         <Column id="pipeFlowCol" minScreenWidth="Tablet" demandPopin="true"><Text id="pipeFlowHdr" text="{i18n>flowLabel}" /></Column>
                         <Column id="pipePressureCol" minScreenWidth="Desktop" demandPopin="true"><Text id="pipePressureHdr" text="{i18n>pressureLabel}" /></Column>
                         <Column id="pipeRepairCol" minScreenWidth="Desktop" demandPopin="true"><Text id="pipeRepairHdr" text="{i18n>lastRepairLabel}" /></Column>
-                        <Column id="pipeActionCol" hAlign="End"><Text id="pipeActionHdr" text="{i18n>pipeAction}" class="sapUiSmallMarginEnd" /></Column>
+                        <Column id="pipeActionCol" hAlign="Begin"><Text id="pipeActionHdr" text="{i18n>pipeAction}" /></Column>
                     </columns>
                     <items>
                         <ColumnListItem id="pipeRow" type="Active" press=".onSelectRow"

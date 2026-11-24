@@ -27,6 +27,10 @@
                     <!-- Column 1: Record modification timeline -->
                     <VBox id="detailAuditCol1" class="invAuditBox">
                         <Title id="detailAuditTitle" text="{i18n>detailChanged}" level="H4" class="sapUiTinyMarginBottom" />
+                        <HBox id="detailQuietHoursRow" visible="{detail>/isQuietHours}" class="sapUiTinyMarginBottom">
+                            <ObjectStatus id="detailQuietStatus" text="{i18n>detailQuietHoursBadge}" state="Error" icon="sap-icon://bed"
+                                tooltip="{i18n>detailQuietHoursHint}" inverted="true" />
+                        </HBox>
                         <HBox id="detailChangedUtcBox" class="sapUiTinyMarginBottom">
                             <Text id="detailChangedUtcText" text="{detail>/changedUtc}" class="sapUiTinyMarginEnd" />
                             <Text id="detailChangedUtcHint" text="{i18n>detailChangedUtc}" class="invMuted" />

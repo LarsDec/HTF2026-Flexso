@@ -75,4 +75,9 @@ export default {
   fill(template: string, value: string | number | null | undefined): string {
     return template.replace("{0}", String(value ?? ""));
   },
+
+  /** True if the rules list includes the given rule. */
+  hasRule(rules: string | null | undefined, ruleId: string): boolean {
+    return (rules ?? "").split(",").includes(ruleId);
+  },
 };
