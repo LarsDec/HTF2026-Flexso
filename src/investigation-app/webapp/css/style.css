@@ -39,25 +39,33 @@
 
 /* Printing the council view: only the dialog, flat and without scrolling. Paper is light, so the colours are too. */
 @media print {
-    body > *:not(#sap-ui-static) {
-        display: none !important;
+    body,
+    html {
+        background: #ffffff !important;
+        color: #000000 !important;
     }
 
-    #sap-ui-blocklayer-popup,
-    .invNoPrint {
-        display: none !important;
+    body * {
+        visibility: hidden !important;
     }
 
-    .invCouncilDialog.sapMDialog {
-        position: static !important;
+    .invCouncilDialog,
+    .invCouncilDialog * {
+        visibility: visible !important;
+    }
+
+    .invCouncilDialog {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
         width: 100% !important;
-        max-width: none !important;
+        max-width: 100% !important;
         height: auto !important;
         max-height: none !important;
         box-shadow: none !important;
-        border: 0 !important;
-        background: white !important;
-        color: black !important;
+        border: none !important;
+        background: #ffffff !important;
+        color: #000000 !important;
     }
 
     .invCouncilDialog .sapMDialogSection,
@@ -65,13 +73,26 @@
         height: auto !important;
         max-height: none !important;
         overflow: visible !important;
-        background: white !important;
+        background: #ffffff !important;
+    }
+
+    .invCouncilDialog header,
+    .invCouncilDialog footer,
+    .invCouncilDialog .sapMDialogHeader,
+    .invCouncilDialog .sapMDialogFooter {
+        display: none !important;
     }
 
     .invCouncilDialog .sapMText,
     .invCouncilDialog .sapMTitle,
     .invCouncilDialog .sapMLabel,
     .invCouncilDialog .sapMListTblCell {
-        color: black !important;
+        color: #000000 !important;
+    }
+
+    #sap-ui-blocklayer-popup,
+    .sapUiBLPtst,
+    .sapUiBlockLayer {
+        display: none !important;
     }
 }

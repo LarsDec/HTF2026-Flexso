@@ -72,6 +72,7 @@ export default class Main extends Controller {
     view?.setModel(new JSONModel({}), "detail");
     view?.setModel(new JSONModel({ sentence: "", buckets: [], lines: [] }), "council");
     void this.applyFilter("all");
+    void this.loadCounts();
   }
 
   public onExit(): void {
@@ -85,6 +86,7 @@ export default class Main extends Controller {
 
   public onRefresh(): void {
     this.table()?.getBinding("items")?.refresh();
+    void this.loadCounts();
   }
 
   /** Shows all lines, the lines still to review, or the marked ones. The table filters on the client. */
@@ -376,7 +378,53 @@ export default class Main extends Controller {
   }
 
   public onPrintCouncil(): void {
-    window.print();
+    const dialogDom = this.councilDialog?.getDomRef();
+    if (!dialogDom) {
+      window.print();
+      return;
+    }
+
+    const printWindow = window.open("", "_blank", "width=900,height=700");
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    const title = (this.getView()?.getModel("i18n") as ResourceModel | undefined)
+      ?.getResourceBundle()
+      ?.getText("councilTitle") ?? "Council Report";
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${title}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 2rem; color: #1a1a1a; }
+    h2, h3 { color: #0b2545; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; }
+    p { line-height: 1.5; font-size: 1.05rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    th, td { border: 1px solid #ccc; padding: 0.6rem 0.8rem; text-align: left; }
+    th { background: #f0f4f8; font-weight: 600; color: #333; }
+    .muted { color: #666; font-size: 0.85rem; }
+    .bar { display: inline-block; height: 12px; background: #d32f2f; border-radius: 2px; }
+    @media print {
+      body { margin: 1cm; }
+    }
+  </style>
+</head>
+<body>
+  <h2>${title}</h2>
+  ${dialogDom.querySelector(".sapMDialogSection")?.innerHTML ?? dialogDom.innerHTML}
+</body>
+</html>`);
+
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 350);
   }
 
   public onCloseCouncil(): void {
